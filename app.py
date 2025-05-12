@@ -29,15 +29,15 @@ if uploaded_file is not None:
     if os.path.exists(output_dir):
     # Show spectrum plots
       st.subheader("Spectrum Plots")
-        for img_file in sorted(os.listdir(output_dir)):
-          if img_file.startswith("Full") or img_file.startswith("Rescaled"):
-            st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
+      for img_file in sorted(os.listdir(output_dir)):
+         if img_file.startswith("Full") or img_file.startswith("Rescaled"):
+          st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
 
 # Show fit plots
       st.subheader("Fit Plots")
-        for img_file in sorted(os.listdir(output_dir)):
-          if img_file.startswith("Fit_"):
-            st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
+      for img_file in sorted(os.listdir(output_dir)):
+        if img_file.startswith("Fit_"):
+          st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
 
       csv_path = os.path.join(base_name, "Fit_Params.csv")
       if os.path.exists(csv_path):
