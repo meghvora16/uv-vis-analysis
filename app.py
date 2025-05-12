@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-import workflow # your logic file
+import workflow
 
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
 st.title("UV-Vis Spectrum Analyzer")
@@ -27,13 +27,11 @@ if uploaded_file is not None:
     output_dir = os.path.join(base_name, "plots")
 
     if os.path.exists(output_dir):
-    # Show spectrum plots
       st.subheader("Spectrum Plots")
       for img_file in sorted(os.listdir(output_dir)):
          if img_file.startswith("Full") or img_file.startswith("Rescaled"):
           st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
 
-# Show fit plots
       st.subheader("Fit Plots")
       for img_file in sorted(os.listdir(output_dir)):
         if img_file.startswith("Fit_"):
