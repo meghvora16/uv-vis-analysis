@@ -3,7 +3,10 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import workflow
+import streamlit as st
 
+logo_image_path = "schaeffler_logo.png"
+st.image(logo_image_path, width=100)
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
 st.title("UV-Vis Spectrum Analyzer")
 
