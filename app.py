@@ -3,7 +3,6 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import workflow
-import streamlit as st
 
 logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=100)
