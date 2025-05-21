@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import workflow
 
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
-logo_image_path = "schaeffler_logo (2).png"
-st.image(logo_image_path, width=150)
+logo_image_path = "Schaeffler_Logo.png"
+st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
 uploaded_file = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"])
