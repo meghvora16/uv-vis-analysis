@@ -7,7 +7,6 @@ import workflow
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
 logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=200)
-st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
 st.title("UV-Vis Spectrum Analyzer")
 
 uploaded_file = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"])
