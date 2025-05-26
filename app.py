@@ -9,7 +9,7 @@ logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
-uploaded_file = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"])
+uploaded_file = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
 
 if uploaded_file is not None:
   file_path = os.path.join("uploaded", uploaded_file.name)
