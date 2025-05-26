@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 output_folder = "Combined_Fits"
 
 def r2_score(y_true, y_pred):
-    ss_res = np.sum((y_true - y_pred) ** 2) 
+    ss_res = np.sum((y_true - y_pred) ** 2)
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
     return 1 - (ss_res / ss_tot)
 
@@ -54,16 +54,10 @@ def fit_and_plot(filepath, target_wavelengths):
         fig, ax = plt.subplots(figsize=(8, 5))
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
-        try:
+        if r2_score(y_vals, single_exp(x_vals, *curve_fit(single_exp, x_vals, y_vals, maxfev=10000)[0])) >= 1.0:
             popt_single, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
             y_fit_single = single_exp(x_vals, *popt_single)
             r2_single = r2_score(y_vals, y_fit_single)
-        except RuntimeError:
-            r2_single = -np.inf
-            popt_single = None
-        
-        R2_THRESHOLD = 1.0
-        if popt_single is not None and r2_single >= R2_THRESHOLD:
             ax.plot(x_vals, y_fit_single, 'g--', label=f"Single Exp Fit\n$R^2$={r2_single:.3f}")
             fit_params_list.append({
                 "Spectrum": base_name,
@@ -108,7 +102,9 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.close()
 
     # Write the fit parameters to CSV with exponential formatting
-    pd.DataFrame(fit_params_list).to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
+    fit_params_df = pd.DataFrame(fit_params_list)
+    fit_params_df.to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
+    print(f"Fit parameters for {base_name}:\n", fit_params_df)
 
     # Implement comparison logic using k-values and returning the comparison dataframe
     if 400 in decay_constants_dict and 514 in decay_constants_dict:
