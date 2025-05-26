@@ -9,7 +9,11 @@ def r2_score(y_true, y_pred):
     ss_res = np.sum((y_true - y_pred) ** 2)
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
     return 1 - (ss_res / ss_tot)
-
+    
+def single_exp(t, A, k, C): 
+    t = np.array(t, dtype=float)
+    return A * np.exp(-k * t) + C
+    
 def double_exp(t, A1, k1, A2, k2, C):
     t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + C
@@ -99,25 +103,47 @@ def fit_and_plot(filepath, target_wavelengths):
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
         try:
-            popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000, method='trf')
-            y_fit = double_exp(x_vals, *popt)
-            r2 = r2_score(y_vals, y_fit)
-            # Calculate half-life values: ln(2)/k1 and ln(2)/k2
-            half_life1 = np.log(2) / popt[1] if popt[1] != 0 else np.nan
-            half_life2 = np.log(2) / popt[3] if popt[3] != 0 else np.nan
-            x_fine = np.linspace(min(x_vals), max(x_vals), 100)
-            y_fine = double_exp(x_fine, *popt)
-            ax.plot(x_fine, y_fine, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
-
+            popt_single, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
+            y_fit_single = single_exp(x_vals, *popt_single)
+            r2_single = r2_score(y_vals, y_fit_single)
+        except RuntimeError:
+            r2_single = -np.inf
+            popt_single = None
+        R2_THRESHOLD = 0.95
+        if popt_single is not None and r2_single >= R2_THRESHOLD:
+            half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
+            ax.plot(x_vals, y_fit_single, 'g--', label=f"Single Exp Fit\n$R^2$={r2_single:.3f}")
             fit_params_list.append({
                 "Spectrum": base_name,
                 "Wavelength (nm)": target_wavelength,
-                "A1": popt[0], "k1": popt[1],
-                "half_life1_sec": half_life1,
-                "A2": popt[2], "k2": popt[3],
-                "half_life2_sec": half_life2,
-                "C": popt[4], "R²": r2
+                "Model": "Single",
+                "A": popt_single[0],
+                "k": popt_single[1],
+                "half_life_sec": half_life,
+                "C": popt_single[2],
+                "R²": r2_single
             })
+        else:
+            try:
+                popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000, method='trf')
+                y_fit = double_exp(x_vals, *popt)
+                r2 = r2_score(y_vals, y_fit)
+                # Calculate half-life values: ln(2)/k1 and ln(2)/k2
+                half_life1 = np.log(2) / popt[1] if popt[1] != 0 else np.nan
+                half_life2 = np.log(2) / popt[3] if popt[3] != 0 else np.nan
+                x_fine = np.linspace(min(x_vals), max(x_vals), 100)
+                y_fine = double_exp(x_fine, *popt)
+                ax.plot(x_fine, y_fine, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
+    
+                fit_params_list.append({
+                    "Spectrum": base_name,
+                    "Wavelength (nm)": target_wavelength,
+                    "A1": popt[0], "k1": popt[1],
+                    "half_life1_sec": half_life1,
+                    "A2": popt[2], "k2": popt[3],
+                    "half_life2_sec": half_life2,
+                    "C": popt[4], "R²": r2
+                })
 
         except RuntimeError:
             print(f"Fit failed for {base_name} at {target_wavelength} nm")
