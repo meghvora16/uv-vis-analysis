@@ -41,7 +41,7 @@ if uploaded_files:
         for img_file in sorted(os.listdir(output_dir)):
             if img_file.startswith("Fit_"):
               st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)            
-          csv_path = os.path.join(base_name, "Fit_Params.csv")
+              csv_path = os.path.join(base_name, "Fit_Params.csv")
         if os.path.exists(csv_path):
             st.subheader("Fitted Parameters:")
             df = pd.read_csv(csv_path)
