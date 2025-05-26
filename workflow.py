@@ -158,4 +158,15 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
         plt.close()
 
-    pd.DataFrame(fit_params_list).to_csv(os.path.join(base_name, "Fit_Params.csv"), index=False) 
+    pd.DataFrame(fit_params_list).to_csv(os.path.join(base_name, "Fit_Params.csv"), index=False)
+    if 400 in decay_constants_dict and 514 in decay_constants_dict:
+        k2_400 = decay_constants_dict[400][1]
+        k1_514 = decay_constants_dict[514][0]
+        comparison_result = {
+            "Spectrum": base_name,
+            "k2_400": k2_400,
+            "k1_514": k1_514,
+            "Difference": k1_514 - k2_400
+        }
+
+        pd.DataFrame([comparison_result]).to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
