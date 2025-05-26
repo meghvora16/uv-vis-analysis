@@ -145,8 +145,8 @@ def fit_and_plot(filepath, target_wavelengths):
                     "C": popt[4], "R²": r2
                 })
 
-        except RuntimeError:
-            print(f"Fit failed for {base_name} at {target_wavelength} nm")
+            except RuntimeError:
+                print(f"Fit failed for {base_name} at {target_wavelength} nm")
 
         ax.set_title(f"{base_name} — Fit at {target_wavelength} nm")
         ax.set_xlabel("Spectrum Index")
