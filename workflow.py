@@ -167,7 +167,7 @@ def fit_across_files(file_paths, target_wavelengths, output_folder):
     with open(output_txt, "w") as f:
         f.write("Double Exponential Fit Parameters (A1, k1, A2, k2, C)\n\n")
 
-results_400 = {}  # to store 400 nm fit parameters for each spectrum index.
+results_400 = {}
 st.write("=== FITTING ACROSS FILES AT 400 nm ===")
 for spectrum_idx in range(1, 11):
     absorbance_vals_400 = []
@@ -179,7 +179,6 @@ for spectrum_idx in range(1, 11):
     try:
         popt_400, _ = curve_fit(double_exp, days, absorbance_vals_400, maxfev=10000, method='trf')
         results_400[spectrum_idx] = popt_400
-        # (Optional plotting for 400 nm)
         plt.figure(figsize=(8, 5))
         plt.scatter(days, absorbance_vals_400, label="Data", alpha=0.6)
         plt.plot(days, double_exp(days, *popt_400), "r--", label=f"Fit R²={r2_score(absorbance_vals_400, double_exp(days, *popt_400)):.3f}")
@@ -210,13 +209,11 @@ for spectrum_idx in range(1, 11):
     absorbance_vals_514 = np.array(absorbance_vals_514)
     
     if spectrum_idx in results_400:
-        k1_fixed = results_400[spectrum_idx][3]  # using k2 from 400 nm as fixed value.
+        k1_fixed = results_400[spectrum_idx][3]
         try:
-            popt_514, _ = curve_fit(lambda t, A1, A2, k2, C: double_exp_fixed(t, A1, A2, k2, C, k1_fixed),
-                                    days, absorbance_vals_514, maxfev=10000, method='trf')
+            popt_514, _ = curve_fit(lambda t, A1, A2, k2, C: double_exp_fixed(t, A1, A2, k2, C, k1_fixed), days, absorbance_vals_514, maxfev=10000, method='trf')
             with open(output_txt, "a") as f:
                 f.write(f"514 nm, Spectrum {spectrum_idx}: k1_fixed (from 400 nm) = {k1_fixed:.5f}, k2 (from fit) = {popt_514[2]:.5f}\n")
-            # (Optional plotting for 514 nm)
             plt.figure(figsize=(8, 5))
             plt.scatter(days, absorbance_vals_514, label="Data", alpha=0.6)
             plt.plot(days, double_exp_fixed(days, *popt_514, k1_fixed), "b--",
@@ -234,7 +231,7 @@ for spectrum_idx in range(1, 11):
     else:
         with open(output_txt, "a") as f:
             f.write(f"514 nm, Spectrum {spectrum_idx}: No 400 nm fit result available to fix k1\n")
-    for filepath in file_paths.values(): 
-        fit_and_plot(filepath, target_wavelengths)
-        output_folder = "Combined_Fits"
+for filepath in file_paths.values(): 
+    fit_and_plot(filepath, target_wavelengths)
+    output_folder = "Combined_Fits"
     fit_across_files_linked(file_paths, target_wavelengths, output_folder)
