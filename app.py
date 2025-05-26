@@ -54,13 +54,3 @@ if uploaded_files:
                     file_name="Fit_Params.csv",
                     key=f"download_btn_{uploaded_file.name}"
                 )
-st.title('Spectral Analysis and Comparison')
-
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
-if uploaded_file is not None:
-    comparison_result = fit_and_plot(uploaded_file, target_wavelengths)
-    if comparison_result is not None:
-        st.write("Comparison Results:")
-        st.table(comparison_result)
-    else:
-        st.write("Comparison not available, fit might have failed for one or both wavelengths.")
