@@ -115,7 +115,7 @@ def fit_and_plot(filepath, target_wavelengths):
         except RuntimeError:
             r2_single = -np.inf
             popt_single = None
-        R2_THRESHOLD = 0.99
+        R2_THRESHOLD = 1.0
         if popt_single is not None and r2_single >= R2_THRESHOLD:
             half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
             ax.plot(x_vals, y_fit_single, 'g--', label=f"Single Exp Fit\n$R^2$={r2_single:.3f}")
@@ -134,7 +134,6 @@ def fit_and_plot(filepath, target_wavelengths):
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000, method='trf')
                 y_fit = double_exp(x_vals, *popt)
                 r2 = r2_score(y_vals, y_fit)
-                # Calculate half-life values: ln(2)/k1 and ln(2)/k2
                 half_life1 = np.log(2) / popt[1] if popt[1] != 0 else np.nan
                 half_life2 = np.log(2) / popt[3] if popt[3] != 0 else np.nan
                 x_fine = np.linspace(min(x_vals), max(x_vals), 100)
@@ -163,5 +162,52 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
         plt.close()
 
-    pd.DataFrame(fit_params_list).to_csv(os.path.join(base_name,
-"Fit_Params.csv"), index=False)
+    pd.DataFrame(fit_params_list).to_csv(os.path.join(base_name, "Fit_Params.csv"), index=False)
+    def fit_across_files(file_paths, target_wavelengths, output_folder):
+    create_directory(output_folder)
+    output_txt = os.path.join(output_folder, "double_exp_fit_parameters.txt")
+        with open(output_txt, "w") as f:
+            f.write("Double Exponential Fit Parameters (A1, k1, A2, k2, C)\n\n")
+        for wavelength in target_wavelengths:
+            plt.figure(figsize=(8, 5))
+    
+            for spectrum_idx in range(1, 11):
+                absorbance_vals = []
+    
+                for label, path in file_paths.items():
+                    df = load_and_clean(path)
+                    idx = (df.iloc[:, 0] - wavelength).abs().idxmin()
+                    absorbance_vals.append(df.iloc[idx, spectrum_idx])
+    
+                absorbance_vals = np.array(absorbance_vals)
+    
+                try:
+                    popt, _ = curve_fit(double_exp, days, absorbance_vals, maxfev=10000, method='trf')
+                    fit_curve = double_exp(days, *popt)
+    
+                    plt.scatter(days, absorbance_vals, label=f"Spectrum {spectrum_idx}", alpha=0.6)
+                    plt.plot(days, fit_curve, linestyle='--', alpha=0.7)
+    
+                    with open(output_txt, "a") as f:
+                        f.write(f"Wavelength: {wavelength} nm | Spectrum: {spectrum_idx}\n")
+                        f.write(f"Parameters: A1={popt[0]:.5f}, k1={popt[1]:.5f}, "
+                                f"A2={popt[2]:.5f}, k2={popt[3]:.5f}, C={popt[4]:.5f}\n\n")
+    
+                except RuntimeError:
+                    print(f"Fit failed for Spectrum {spectrum_idx} at {wavelength} nm")
+                    with open(output_txt, "a") as f:
+                        f.write(f"Wavelength: {wavelength} nm | Spectrum: {spectrum_idx} - Fit Failed\n\n")
+    
+            plt.xlabel("Days of Exposure")
+            plt.ylabel("Absorbance")
+            plt.title(f"Double Exponential Fit at {wavelength} nm (All Files)")
+            plt.grid()
+            plt.legend(fontsize=8, ncol=2)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_folder, f"double_exp_fit_{wavelength}nm.png"), dpi=300)
+            plt.close()
+for filepath in file_paths.values():
+    fit_and_plot(filepath, target_wavelengths)
+
+fit_across_files(file_paths, target_wavelengths,
+output_folder="Combined_Fits")
