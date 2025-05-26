@@ -129,8 +129,8 @@ def fit_and_plot(filepath, target_wavelengths):
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000, method='trf')
                 y_fit = double_exp(x_vals, *popt)
                 r2 = r2_score(y_vals, y_fit)
-                half_life1 = np.log(2) / popt[1] if popt[1] != 0 else np.nan
-                half_life2 = np.log(2) / popt[3] if popt[3] != 0 else np.nan
+                half_life1 = (np.log(2) / popt[1]) * 86400 if popt[1] != 0 else np.nan
+                half_life2 = (np.log(2) / popt[3]) * 86400 if popt[3] != 0 else np.nan
                 x_fine = np.linspace(min(x_vals), max(x_vals), 100)
                 y_fine = double_exp(x_fine, *popt)
                 ax.plot(x_fine, y_fine, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
