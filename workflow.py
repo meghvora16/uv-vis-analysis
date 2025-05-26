@@ -169,4 +169,4 @@ def fit_and_plot(filepath, target_wavelengths):
             "Difference": k1_514 - k2_400
         }
 
-        pd.DataFrame([comparison_result]).to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
+    pd.DataFrame([comparison_result]).to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
