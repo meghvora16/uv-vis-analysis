@@ -31,10 +31,10 @@ def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def fit_and_plot(file_path, target_wavelengths):
-    base_name = os.path.splitext(os.path.basename(file_path))[0]
+def fit_and_plot(filepath, target_wavelengths):
+    base_name = os.path.splitext(os.path.basename(filepath))[0]
     create_directory(output_folder)
-    df = load_and_clean(file_path)
+    df = load_and_clean(filepath)
     plot_spectra(df, base_name, base_name)
     
     plot_dir = os.path.join(output_folder, base_name, "plots")
@@ -58,7 +58,7 @@ def fit_and_plot(file_path, target_wavelengths):
         except RuntimeError:
             r2_single = -np.inf
             popt_single = None
-
+        
         R2_THRESHOLD = 1.0
         if popt_single is not None and r2_single >= R2_THRESHOLD:
             half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
@@ -112,13 +112,14 @@ def fit_and_plot(file_path, target_wavelengths):
 
     pd.DataFrame(fit_params_list).to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
 
+    # Implement comparison logic using k-values and returning the comparison dataframe
     if 400 in decay_constants_dict and 514 in decay_constants_dict:
         k2_400 = decay_constants_dict[400][1]
         k1_514 = decay_constants_dict[514][0]
         comparison_result = pd.DataFrame([{
-            "Spectrum": base_name,
-            "k2_400": k2_400,
-            "k1_514": k1_514,
+            "Wavelength Transition": "400nm -> 514nm",
+            "Previous k2": k2_400,
+            "New k1": k1_514,
             "Difference": k1_514 - k2_400
         }])
         
