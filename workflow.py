@@ -1,12 +1,9 @@
-import streamlit as st
 import os
-import re
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-# Define the output folder path upfront
 output_folder = "Combined_Fits"
 
 def r2_score(y_true, y_pred):
@@ -34,20 +31,13 @@ def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def extract_days(file_paths):
-    days = []
-    for label in file_paths:
-        match = re.search(r'\d+', label)
-        if match:
-            days.append(int(match.group()))
-    return np.array(days, dtype=float)
-
-def fit_and_plot(filepath, target_wavelengths):
-    base_name = os.path.splitext(os.path.basename(filepath))[0]
+def fit_and_plot(file_path, target_wavelengths):
+    base_name = os.path.splitext(os.path.basename(file_path))[0]
     create_directory(output_folder)
-    df = load_and_clean(filepath)
+    df = load_and_clean(file_path)
     plot_spectra(df, base_name, base_name)
-    plot_dir = os.path.join(base_name, "plots")
+    
+    plot_dir = os.path.join(output_folder, base_name, "plots")
     create_directory(plot_dir)
 
     fit_params_list = []
@@ -68,7 +58,7 @@ def fit_and_plot(filepath, target_wavelengths):
         except RuntimeError:
             r2_single = -np.inf
             popt_single = None
-        
+
         R2_THRESHOLD = 1.0
         if popt_single is not None and r2_single >= R2_THRESHOLD:
             half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
@@ -120,7 +110,7 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
         plt.close()
 
-    pd.DataFrame(fit_params_list).to_csv(os.path.join(base_name, "Fit_Params.csv"), index=False)
+    pd.DataFrame(fit_params_list).to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
 
     if 400 in decay_constants_dict and 514 in decay_constants_dict:
         k2_400 = decay_constants_dict[400][1]
@@ -132,14 +122,14 @@ def fit_and_plot(filepath, target_wavelengths):
             "Difference": k1_514 - k2_400
         }])
         
-        comparison_result.to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
+        comparison_result.to_csv(os.path.join(output_folder, base_name, "Decay_Comparison.csv"), index=False)
         return comparison_result
     else:
         return None
 
 def plot_spectra(df, filename, label):
     wavelengths = df.iloc[:, 0].to_numpy()
-    rescaled_dir = os.path.join(filename, "plots")
+    rescaled_dir = os.path.join(output_folder, filename, "plots")
     create_directory(rescaled_dir)
 
     plt.figure(figsize=(10, 5))
@@ -170,15 +160,3 @@ def plot_spectra(df, filename, label):
     plt.tight_layout()
     plt.savefig(os.path.join(rescaled_dir, f"Rescaled_Spectrum_{label}.png"), dpi=300)
     plt.close()
-
-# Streamlit UI
-st.title('Spectral Analysis and Comparison')
-
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
-if uploaded_file is not None:
-    comparison_result = fit_and_plot(uploaded_file, target_wavelengths)
-    if comparison_result is not None:
-        st.write("Comparison Results:")
-        st.table(comparison_result)
-    else:
-        st.write("Comparison not available, fit might have failed for one or both wavelengths.")
