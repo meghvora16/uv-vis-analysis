@@ -7,7 +7,7 @@ from scipy.optimize import curve_fit
 output_folder = "Combined_Fits"
 
 def r2_score(y_true, y_pred):
-    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_res = np.sum((y_true - y_pred) ** 2) 
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
     return 1 - (ss_res / ss_tot)
 
@@ -30,6 +30,9 @@ def load_and_clean(filepath):
 def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+def format_to_exponential(value):
+    return f"{value:.3e}"
 
 def fit_and_plot(filepath, target_wavelengths):
     base_name = os.path.splitext(os.path.basename(filepath))[0]
@@ -66,10 +69,10 @@ def fit_and_plot(filepath, target_wavelengths):
                 "Spectrum": base_name,
                 "Wavelength (nm)": target_wavelength,
                 "Model": "Single",
-                "A": f"{popt_single[0]:.3e}",
-                "k": f"{popt_single[1]:.3e}",
-                "C": f"{popt_single[2]:.3e}",
-                "R²": f"{r2_single:.3e}"
+                "A": format_to_exponential(popt_single[0]),
+                "k": format_to_exponential(popt_single[1]),
+                "C": format_to_exponential(popt_single[2]),
+                "R²": format_to_exponential(r2_single)
             })
         else:
             try:
@@ -84,12 +87,12 @@ def fit_and_plot(filepath, target_wavelengths):
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
-                    "A1": f"{popt[0]:.4e}",
-                    "k1": f"{popt[1]:.4e}",
-                    "A2": f"{popt[2]:.4e}",
-                    "k2": f"{popt[3]:.4e}",
-                    "C": f"{popt[4]:.4e}",
-                    "R²": f"{r2:.4e}"
+                    "A1": format_to_exponential(popt[0]),
+                    "k1": format_to_exponential(popt[1]),
+                    "A2": format_to_exponential(popt[2]),
+                    "k2": format_to_exponential(popt[3]),
+                    "C": format_to_exponential(popt[4]),
+                    "R²": format_to_exponential(r2)
                 })
 
             except RuntimeError:
@@ -113,9 +116,9 @@ def fit_and_plot(filepath, target_wavelengths):
         k1_514 = decay_constants_dict[514][0]
         comparison_result = pd.DataFrame([{
             "Wavelength Transition": "400nm -> 514nm",
-            "Previous k2": f"{k2_400:.3e}",
-            "New k1": f"{k1_514:.3e}",
-            "Difference": f"{(k1_514 - k2_400):.3e}"
+            "Previous k2": format_to_exponential(k2_400),
+            "New k1": format_to_exponential(k1_514),
+            "Difference": format_to_exponential(k1_514 - k2_400)
         }])
         
         comparison_result.to_csv(os.path.join(output_folder, base_name, "Decay_Comparison.csv"), index=False)
