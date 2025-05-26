@@ -20,7 +20,7 @@ if uploaded_files:
     st.success(f"File uploaded: {uploaded_file.name}")
 
  # Set target wavelengths.
-      workflow.target_wavelengths = [400, 514]
+    workflow.target_wavelengths = [400, 514]
         
         # Run the analysis for this file.
         with st.spinner(f"Running analysis on {uploaded_file.name}..."):
