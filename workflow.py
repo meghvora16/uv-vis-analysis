@@ -167,7 +167,7 @@ def fit_across_files(file_paths, target_wavelengths, output_folder):
     with open(output_txt, "w") as f:
         f.write("Double Exponential Fit Parameters (A1, k1, A2, k2, C)\n\n")
 
-    results_400 = {}  # to store 400 nm fit parameters for each spectrum index.
+results_400 = {}  # to store 400 nm fit parameters for each spectrum index.
 st.write("=== FITTING ACROSS FILES AT 400 nm ===")
 for spectrum_idx in range(1, 11):
     absorbance_vals_400 = []
@@ -234,3 +234,5 @@ for spectrum_idx in range(1, 11):
     else:
         with open(output_txt, "a") as f:
             f.write(f"514 nm, Spectrum {spectrum_idx}: No 400 nm fit result available to fix k1\n")
+    for filepath in file_paths.values(): fit_and_plot(filepath, target_wavelengths)
+        fit_across_files_linked(file_paths, target_wavelengths, output_folder="Combined_Fits")
