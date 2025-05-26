@@ -95,7 +95,8 @@ def fit_and_plot(filepath, target_wavelengths):
     create_directory(plot_dir)
 
     fit_params_list = []
-    decay_constants_dict = {}
+    decay_constants_dict = {}  # Initialize decay constants dictionary
+
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
@@ -111,6 +112,7 @@ def fit_and_plot(filepath, target_wavelengths):
         except RuntimeError:
             r2_single = -np.inf
             popt_single = None
+        
         R2_THRESHOLD = 1.0
         if popt_single is not None and r2_single >= R2_THRESHOLD:
             half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
@@ -135,15 +137,21 @@ def fit_and_plot(filepath, target_wavelengths):
                 x_fine = np.linspace(min(x_vals), max(x_vals), 100)
                 y_fine = double_exp(x_fine, *popt)
                 ax.plot(x_fine, y_fine, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
-    
+
+                # Save decay constants for comparison
+                decay_constants_dict[target_wavelength] = (popt[1], popt[3])
+
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
-                    "A1": popt[0], "k1": popt[1],
+                    "A1": popt[0],
+                    "k1": popt[1],
                     "half_life1_sec": half_life1,
-                    "A2": popt[2], "k2": popt[3],
+                    "A2": popt[2],
+                    "k2": popt[3],
                     "half_life2_sec": half_life2,
-                    "C": popt[4], "R²": r2
+                    "C": popt[4],
+                    "R²": r2
                 })
 
             except RuntimeError:
@@ -159,6 +167,8 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.close()
 
     pd.DataFrame(fit_params_list).to_csv(os.path.join(base_name, "Fit_Params.csv"), index=False)
+
+    # Conditional writing of comparison result
     if 400 in decay_constants_dict and 514 in decay_constants_dict:
         k2_400 = decay_constants_dict[400][1]
         k1_514 = decay_constants_dict[514][0]
@@ -169,4 +179,5 @@ def fit_and_plot(filepath, target_wavelengths):
             "Difference": k1_514 - k2_400
         }
 
-    pd.DataFrame([comparison_result]).to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
+        # Write comparison only if it's defined
+        pd.DataFrame([comparison_result]).to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
