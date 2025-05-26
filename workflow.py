@@ -6,6 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
+# Define the output folder path upfront
+output_folder = "Combined_Fits"
+
 def r2_score(y_true, y_pred):
     ss_res = np.sum((y_true - y_pred) ** 2)
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
@@ -45,6 +48,8 @@ file_paths = {
     "15d": "ExxonMobil_Schaffler_LV-AU_150°C_15d.txt",
     "21d": "ExxonMobil_Schaffler_LV-AU_150°C_21d.txt"
 }
+
+create_directory(output_folder)
 
 days = extract_days(file_paths)
 time_seconds = days * 86400
@@ -231,8 +236,3 @@ for spectrum_idx in range(1, 11):
     else:
         with open(output_txt, "a") as f:
             f.write(f"514 nm, Spectrum {spectrum_idx}: No 400 nm fit result available to fix k1\n")
-    output_folder = "Combined_Fits"
-    fit_across_files(file_paths, target_wavelengths, output_folder)
-    for filepath in file_paths.values(): 
-        fit_and_plot(filepath, target_wavelengths)
-    fit_across_files(file_paths, target_wavelengths, output_folder)
