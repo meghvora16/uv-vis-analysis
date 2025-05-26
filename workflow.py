@@ -109,7 +109,7 @@ def fit_and_plot(filepath, target_wavelengths):
         except RuntimeError:
             r2_single = -np.inf
             popt_single = None
-        R2_THRESHOLD = 0.95
+        R2_THRESHOLD = 0.99
         if popt_single is not None and r2_single >= R2_THRESHOLD:
             half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
             ax.plot(x_vals, y_fit_single, 'g--', label=f"Single Exp Fit\n$R^2$={r2_single:.3f}")
