@@ -9,15 +9,13 @@ logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
-uploaded_file = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
-
-if uploaded_file is not None:
-  file_path = os.path.join("uploaded", uploaded_file.name)
-  os.makedirs("uploaded", exist_ok=True)
-  with open(file_path, "wb") as f:
-    f.write(uploaded_file.getbuffer())
-
-  st.success(f"File uploaded: {uploaded_file.name}")
+uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
+if uploaded_files:
+  for uploaded_file in uploaded_files:
+    file_path = os.path.join(save_dir, uploaded_file.name)
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    st.success(f"File uploaded: {uploaded_file.name}")
 
   workflow.target_wavelengths = [400, 514]
 
