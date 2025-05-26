@@ -10,7 +10,8 @@ st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
 uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
-save_dir = "uploaded" os.makedirs(save_dir, exist_ok=True)
+save_dir = "uploaded" 
+os.makedirs(save_dir, exist_ok=True)
 if uploaded_files:
   for uploaded_file in uploaded_files:
     file_path = os.path.join(save_dir, uploaded_file.name)
