@@ -172,67 +172,47 @@ def fit_across_files(file_paths, target_wavelengths, output_folder):
     with open(output_txt, "w") as f:
         f.write("Double Exponential Fit Parameters (A1, k1, A2, k2, C)\n\n")
 
-results_400 = {}
-st.write("=== FITTING ACROSS FILES AT 400 nm ===")
-for spectrum_idx in range(1, 11):
-    absorbance_vals_400 = []
-    for label, path in file_paths.items():
-        df = load_and_clean(path)
-        idx = (df.iloc[:, 0] - 400).abs().idxmin()
-        absorbance_vals_400.append(df.iloc[idx, spectrum_idx])
-    absorbance_vals_400 = np.array(absorbance_vals_400)
-    try:
-        popt_400, _ = curve_fit(double_exp, days, absorbance_vals_400, maxfev=10000, method='trf')
-        results_400[spectrum_idx] = popt_400
+for wavelength in target_wavelengths:
         plt.figure(figsize=(8, 5))
-        plt.scatter(days, absorbance_vals_400, label="Data", alpha=0.6)
-        plt.plot(days, double_exp(days, *popt_400), "r--", label=f"Fit R²={r2_score(absorbance_vals_400, double_exp(days, *popt_400)):.3f}")
+
+        for spectrum_idx in range(1, 11):
+            absorbance_vals = []
+
+            for label, path in file_paths.items():
+                df = load_and_clean(path)
+                idx = (df.iloc[:, 0] - wavelength).abs().idxmin()
+                absorbance_vals.append(df.iloc[idx, spectrum_idx])
+
+            absorbance_vals = np.array(absorbance_vals)
+
+            try:
+                popt, _ = curve_fit(double_exp, days, absorbance_vals, maxfev=10000, method='trf')
+                fit_curve = double_exp(days, *popt)
+
+                plt.scatter(days, absorbance_vals, label=f"Spectrum {spectrum_idx}", alpha=0.6)
+                plt.plot(days, fit_curve, linestyle='--', alpha=0.7)
+
+                with open(output_txt, "a") as f:
+                    f.write(f"Wavelength: {wavelength} nm | Spectrum: {spectrum_idx}\n")
+                    f.write(f"Parameters: A1={popt[0]:.5f}, k1={popt[1]:.5f}, "
+                            f"A2={popt[2]:.5f}, k2={popt[3]:.5f}, C={popt[4]:.5f}\n\n")
+
+            except RuntimeError:
+                print(f"Fit failed for Spectrum {spectrum_idx} at {wavelength} nm")
+                with open(output_txt, "a") as f:
+                    f.write(f"Wavelength: {wavelength} nm | Spectrum: {spectrum_idx} - Fit Failed\n\n")
+
         plt.xlabel("Days of Exposure")
         plt.ylabel("Absorbance")
-        plt.title(f"400 nm: Spectrum {spectrum_idx}")
+        plt.title(f"Double Exponential Fit at {wavelength} nm (All Files)")
+        plt.grid()
         plt.legend(fontsize=8, ncol=2)
         plt.tight_layout()
-        plt.savefig(os.path.join(output_folder, f"double_exp_fit_400nm_spectrum{ spectrum_idx }.png"), dpi=300)
+        plt.savefig(os.path.join(output_folder, f"double_exp_fit_{wavelength}nm.png"), dpi=300)
         plt.close()
 
-        with open(output_txt, "a") as f:
-            f.write(f"400 nm, Spectrum {spectrum_idx}: A1={popt_400[0]:.5f}, k1={popt_400[1]:.5f}, A2={popt_400[2]:.5f}, k2={popt_400[3]:.5f}, C={popt_400[4]:.5f}\n")
-    except RuntimeError:
-        with open(output_txt, "a") as f:
-            f.write(f"400 nm, Spectrum {spectrum_idx}: Fit Failed\n")
-            
-st.write("=== FITTING ACROSS FILES AT 514 nm (LINKED TO 400 nm) ===")
-def double_exp_fixed(t, A1, A2, k2, C, k1_fixed):
-    return A1 * np.exp(-k1_fixed * t) + A2 * np.exp(-k2 * t) + C
+# Run
+for filepath in file_paths.values():
+    fit_and_plot(filepath, target_wavelengths)
 
-for spectrum_idx in range(1, 11):
-    absorbance_vals_514 = []
-    for label, path in file_paths.items():
-        df = load_and_clean(path)
-        idx = (df.iloc[:, 0] - 514).abs().idxmin()
-        absorbance_vals_514.append(df.iloc[idx, spectrum_idx])
-    absorbance_vals_514 = np.array(absorbance_vals_514)
-    
-    if spectrum_idx in results_400:
-        k1_fixed = results_400[spectrum_idx][3]
-        try:
-            popt_514, _ = curve_fit(lambda t, A1, A2, k2, C: double_exp_fixed(t, A1, A2, k2, C, k1_fixed), days, absorbance_vals_514, maxfev=10000, method='trf')
-            with open(output_txt, "a") as f:
-                f.write(f"514 nm, Spectrum {spectrum_idx}: k1_fixed (from 400 nm) = {k1_fixed:.5f}, k2 (from fit) = {popt_514[2]:.5f}\n")
-            plt.figure(figsize=(8, 5))
-            plt.scatter(days, absorbance_vals_514, label="Data", alpha=0.6)
-            plt.plot(days, double_exp_fixed(days, *popt_514, k1_fixed), "b--",
-                     label=f"Fit (linked) R²={r2_score(absorbance_vals_514, double_exp_fixed(days, *popt_514, k1_fixed)):.3f}")
-            plt.xlabel("Days of Exposure")
-            plt.ylabel("Absorbance")
-            plt.title(f"514 nm (linked), Spectrum {spectrum_idx}")
-            plt.legend(fontsize=8, ncol=2)
-            plt.tight_layout()
-            plt.savefig(os.path.join(output_folder, f"double_exp_fit_514nm_spectrum{ spectrum_idx }.png"), dpi=300)
-            plt.close()
-        except RuntimeError:
-            with open(output_txt, "a") as f:
-                f.write(f"514 nm, Spectrum {spectrum_idx}: Fit Failed\n")
-    else:
-        with open(output_txt, "a") as f:
-            f.write(f"514 nm, Spectrum {spectrum_idx}: No 400 nm fit result available to fix k1\n")
+fit_across_files(file_paths, target_wavelengths, output_folder="Combined_Fits")
