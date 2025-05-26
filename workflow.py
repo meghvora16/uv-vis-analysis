@@ -95,7 +95,7 @@ def fit_and_plot(filepath, target_wavelengths):
     create_directory(plot_dir)
 
     fit_params_list = []
-
+    decay_constants_dict = {}
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
