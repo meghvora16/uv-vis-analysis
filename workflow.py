@@ -98,6 +98,7 @@ def fit_and_plot(filepath, target_wavelengths):
     decay_constants_dict = {}  # Initialize decay constants dictionary
 
     for target_wavelength in target_wavelengths:
+        print(f"Processing wavelength: {target_wavelength} nm")  # Debug statement
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float)
@@ -112,7 +113,7 @@ def fit_and_plot(filepath, target_wavelengths):
         except RuntimeError:
             r2_single = -np.inf
             popt_single = None
-        
+
         R2_THRESHOLD = 1.0
         if popt_single is not None and r2_single >= R2_THRESHOLD:
             half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
@@ -140,6 +141,7 @@ def fit_and_plot(filepath, target_wavelengths):
 
                 # Save decay constants for comparison
                 decay_constants_dict[target_wavelength] = (popt[1], popt[3])
+                print(f"Decay constants for {target_wavelength} nm: k1 = {popt[1]}, k2 = {popt[3]}")  # Debug statement
 
                 fit_params_list.append({
                     "Spectrum": base_name,
@@ -179,5 +181,8 @@ def fit_and_plot(filepath, target_wavelengths):
             "Difference": k1_514 - k2_400
         }
 
-        # Write comparison only if it's defined
+        # Write only if comparison_result is defined
         pd.DataFrame([comparison_result]).to_csv(os.path.join(base_name, "Decay_Comparison.csv"), index=False)
+        print("Comparison result saved.")  # Debug statement
+    else:
+        print("Comparison result not created. Check if fits succeeded for both wavelengths.")  # Debug statement
