@@ -42,12 +42,7 @@ def extract_days(file_paths):
             days.append(int(match.group()))
     return np.array(days, dtype=float)
 
-file_paths = {
-    "3d": "ExxonMobil_Schaffler_LV-AU_150°C_3d.txt",
-    "10d": "ExxonMobil_Schaffler_LV-AU_150°C_10d.txt",
-    "15d": "ExxonMobil_Schaffler_LV-AU_150°C_15d.txt",
-    "21d": "ExxonMobil_Schaffler_LV-AU_150°C_21d.txt"
-}
+file_paths = {}
 
 create_directory(output_folder)
 
