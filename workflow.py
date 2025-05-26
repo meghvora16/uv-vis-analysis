@@ -241,4 +241,4 @@ for spectrum_idx in range(1, 11):
 # Define the output folder for the combined fits.
         output_folder = "Combined_Fits"
 # Run your combined linked fitting function.
-        fit_across_files_linked(file_paths, target_wavelengths, output_folder)
+    fit_across_files_linked(file_paths, target_wavelengths, output_folder)
