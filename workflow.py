@@ -89,7 +89,7 @@ def fit_and_plot(filepath, target_wavelengths):
                     "A2": f"{popt[2]:.3e}",
                     "k2": f"{popt[3]:.3e}",
                     "C": f"{popt[4]:.3e}",
-                    "R²": f"{r2}"
+                    "R²": f"{r2:.3e}"
                 })
 
             except RuntimeError:
@@ -104,6 +104,7 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
         plt.close()
 
+    # Write the fit parameters to CSV with exponential formatting
     pd.DataFrame(fit_params_list).to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
 
     # Implement comparison logic using k-values and returning the comparison dataframe
