@@ -231,6 +231,6 @@ for spectrum_idx in range(1, 11):
     else:
         with open(output_txt, "a") as f:
             f.write(f"514 nm, Spectrum {spectrum_idx}: No 400 nm fit result available to fix k1\n")
-    for filepath in file_paths.values(): 
-        fit_and_plot(filepath, target_wavelengths)
-    fit_across_files_linked(file_paths, target_wavelengths, output_folder = "Combined_Fits")
+        for filepath in file_paths.values(): 
+            fit_and_plot(filepath, target_wavelengths)
+        fit_across_files_linked(file_paths, target_wavelengths, output_folder = "Combined_Fits")
