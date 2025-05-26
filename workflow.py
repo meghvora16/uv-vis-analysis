@@ -84,12 +84,12 @@ def fit_and_plot(filepath, target_wavelengths):
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
-                    "A1": f"{popt[0]:.3e}",
-                    "k1": f"{popt[1]:.3e}",
-                    "A2": f"{popt[2]:.3e}",
-                    "k2": f"{popt[3]:.3e}",
-                    "C": f"{popt[4]:.3e}",
-                    "R²": f"{r2:.3e}"
+                    "A1": f"{popt[0]:.4e}",
+                    "k1": f"{popt[1]:.4e}",
+                    "A2": f"{popt[2]:.4e}",
+                    "k2": f"{popt[3]:.4e}",
+                    "C": f"{popt[4]:.4e}",
+                    "R²": f"{r2:.4e}"
                 })
 
             except RuntimeError:
