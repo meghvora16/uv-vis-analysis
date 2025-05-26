@@ -145,7 +145,7 @@ def plot_spectra(df, filename, label):
     for i in range(1, num_columns):
         plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
 
-    plt.ylim(0.2, 1)
+    plt.ylim(0, 1)
     plt.xlim(200,700)
     plt.xlabel("Wavelength (nm)")
     plt.ylabel("Absorbance")
