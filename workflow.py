@@ -61,7 +61,6 @@ def fit_and_plot(filepath, target_wavelengths):
         
         R2_THRESHOLD = 1.0
         if popt_single is not None and r2_single >= R2_THRESHOLD:
-            half_life = np.log(2) / popt_single[1] if popt_single[1] != 0 else np.nan
             ax.plot(x_vals, y_fit_single, 'g--', label=f"Single Exp Fit\n$R^2$={r2_single:.3f}")
             fit_params_list.append({
                 "Spectrum": base_name,
@@ -69,7 +68,6 @@ def fit_and_plot(filepath, target_wavelengths):
                 "Model": "Single",
                 "A": popt_single[0],
                 "k": popt_single[1],
-                "half_life_sec": half_life,
                 "C": popt_single[2],
                 "R²": r2_single
             })
@@ -78,8 +76,6 @@ def fit_and_plot(filepath, target_wavelengths):
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000, method='trf')
                 y_fit = double_exp(x_vals, *popt)
                 r2 = r2_score(y_vals, y_fit)
-                half_life1 = (np.log(2) / popt[1]) * 86400 if popt[1] != 0 else np.nan
-                half_life2 = (np.log(2) / popt[3]) * 86400 if popt[3] != 0 else np.nan
                 x_fine = np.linspace(min(x_vals), max(x_vals), 100)
                 y_fine = double_exp(x_fine, *popt)
                 ax.plot(x_fine, y_fine, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
@@ -90,10 +86,8 @@ def fit_and_plot(filepath, target_wavelengths):
                     "Wavelength (nm)": target_wavelength,
                     "A1": popt[0],
                     "k1": popt[1],
-                    "half_life1_sec": half_life1,
                     "A2": popt[2],
                     "k2": popt[3],
-                    "half_life2_sec": half_life2,
                     "C": popt[4],
                     "R²": r2
                 })
