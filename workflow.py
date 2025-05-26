@@ -237,5 +237,6 @@ for spectrum_idx in range(1, 11):
     for filepath in file_paths.values(): 
         fit_and_plot(filepath, target_wavelengths)
     if name == "main":
+        file_paths.values(): fit_and_plot(filepath, target_wavelengths)
         output_folder = "Combined_Fits"
         fit_across_files_linked(file_paths, target_wavelengths, output_folder)
