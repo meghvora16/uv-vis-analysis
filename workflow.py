@@ -236,9 +236,5 @@ for spectrum_idx in range(1, 11):
             f.write(f"514 nm, Spectrum {spectrum_idx}: No 400 nm fit result available to fix k1\n")
     for filepath in file_paths.values(): 
         fit_and_plot(filepath, target_wavelengths)
-    if name == "main": # Run individual fits for each file. for filepath in file_paths.values(): fit_and_plot(filepath, target_wavelengths)
-
-# Define the output folder for the combined fits.
         output_folder = "Combined_Fits"
-# Run your combined linked fitting function.
-    fit_across_files_linked(file_paths, target_wavelengths, output_folder)
+        fit_across_files_linked(file_paths, target_wavelengths, output_folder)
