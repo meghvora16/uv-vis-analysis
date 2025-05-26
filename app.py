@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-import workflow  # Ensure this module has the updated `fit_and_plot` function with triple exponential logic
+import workflow
 
 # Streamlit page configuration
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
@@ -28,8 +28,7 @@ if uploaded_files:
 
         # Run analysis for each file with a spinner indicating progress
         with st.spinner(f"Running analysis on {uploaded_file.name}..."):
-            # Capture returned comparison dataframe from `fit_and_plot`
-            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths)
+            workflow.fit_and_plot(file_path, workflow.target_wavelengths)
 
         st.success(f"Analysis complete for {uploaded_file.name}!")
 
@@ -37,16 +36,11 @@ if uploaded_files:
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         output_dir = os.path.join(workflow.output_folder, base_name, "plots")
 
-        # Display spectrum and fit plots if they exist
+        # Display spectrum and triple exponential fit plots if they exist
         if os.path.exists(output_dir):
-            st.subheader("Spectrum Plots:")
+            st.subheader("Triple Exponential Fit Plots:")
             for img_file in sorted(os.listdir(output_dir)):
-                if img_file.startswith("Full") or img_file.startswith("Rescaled"):
-                    st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
-
-            st.subheader("Fit Plots:")
-            for img_file in sorted(os.listdir(output_dir)):
-                if img_file.startswith("Fit_"):
+                if img_file.startswith("TripleFit_"):
                     st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
 
         # Display fitted parameters and provide download option
@@ -61,8 +55,3 @@ if uploaded_files:
                 file_name="Fit_Params.csv",
                 key=f"download_btn_{uploaded_file.name}"
             )
-
-        # Display comparison of decay constants if available
-        if k_comparison_df is not None:
-            st.subheader("Comparison of k-values:")
-            st.dataframe(k_comparison_df)
