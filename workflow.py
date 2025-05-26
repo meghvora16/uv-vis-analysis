@@ -113,9 +113,9 @@ def fit_and_plot(filepath, target_wavelengths):
                 "Spectrum": base_name,
                 "Wavelength (nm)": target_wavelength,
                 "A1": popt[0], "k1": popt[1],
-                half_life1_sec": half_life1,
+                "half_life1_sec": half_life1,
                 "A2": popt[2], "k2": popt[3],
-                half_life2_sec": half_life2,
+                "half_life2_sec": half_life2,
                 "C": popt[4], "R²": r2
             })
 
