@@ -66,10 +66,10 @@ def fit_and_plot(filepath, target_wavelengths):
                 "Spectrum": base_name,
                 "Wavelength (nm)": target_wavelength,
                 "Model": "Single",
-                "A": popt_single[0],
-                "k": popt_single[1],
-                "C": popt_single[2],
-                "R²": r2_single
+                "A": f"{popt_single[0]:.3e}",
+                "k": f"{popt_single[1]:.3e}",
+                "C": f"{popt_single[2]:.3e}",
+                "R²": f"{r2_single:.3e}"
             })
         else:
             try:
@@ -89,7 +89,7 @@ def fit_and_plot(filepath, target_wavelengths):
                     "A2": f"{popt[2]:.3e}",
                     "k2": f"{popt[3]:.3e}",
                     "C": f"{popt[4]:.3e}",
-                    "R²": f"{r2:.3e}"
+                    "R²": f"{r2}"
                 })
 
             except RuntimeError:
