@@ -84,12 +84,12 @@ def fit_and_plot(filepath, target_wavelengths):
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
-                    "A1": popt[0],
-                    "k1": popt[1],
-                    "A2": popt[2],
-                    "k2": popt[3],
-                    "C": popt[4],
-                    "R²": r2
+                    "A1": f"{popt[0]:.3e}",
+                    "k1": f"{popt[1]:.3e}",
+                    "A2": f"{popt[2]:.3e}",
+                    "k2": f"{popt[3]:.3e}",
+                    "C": f"{popt[4]:.3e}",
+                    "R²": f"{r2:.3e}"
                 })
 
             except RuntimeError:
@@ -112,9 +112,9 @@ def fit_and_plot(filepath, target_wavelengths):
         k1_514 = decay_constants_dict[514][0]
         comparison_result = pd.DataFrame([{
             "Wavelength Transition": "400nm -> 514nm",
-            "Previous k2": k2_400,
-            "New k1": k1_514,
-            "Difference": k1_514 - k2_400
+            "Previous k2": f"{k2_400:.3e}",
+            "New k1": f"{k1_514:.3e}",
+            "Difference": f"{(k1_514 - k2_400):.3e}"
         }])
         
         comparison_result.to_csv(os.path.join(output_folder, base_name, "Decay_Comparison.csv"), index=False)
