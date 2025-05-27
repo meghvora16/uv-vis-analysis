@@ -3,15 +3,11 @@ import pandas as pd
 import os
 import workflow
 
-# Streamlit page configuration
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
-
-# Display Schaeffler logo
 logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
-# File upload section allowing multiple files
 uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
 save_dir = "uploaded"
 os.makedirs(save_dir, exist_ok=True)
@@ -23,27 +19,31 @@ if uploaded_files:
             f.write(uploaded_file.getbuffer())
         st.success(f"File uploaded: {uploaded_file.name}")
 
-        # Set target wavelengths for analysis
+        # Set target wavelengths
         workflow.target_wavelengths = [400, 514]
 
-        # Run analysis for each file with a spinner indicating progress
+        # Run the analysis for this file
         with st.spinner(f"Running analysis on {uploaded_file.name}..."):
-            workflow.fit_and_plot(file_path, workflow.target_wavelengths)
+            # Capture returned comparison result from fit_and_plot
+            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths)
 
         st.success(f"Analysis complete for {uploaded_file.name}!")
 
-        # Define output directory for storing and retrieving plots
+        # Define output directory for plots
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         output_dir = os.path.join(workflow.output_folder, base_name, "plots")
 
-        # Display spectrum and triple exponential fit plots if they exist
         if os.path.exists(output_dir):
-            st.subheader("Triple Exponential Fit Plots:")
+            st.subheader("Spectrum Plots:")
             for img_file in sorted(os.listdir(output_dir)):
-                if img_file.startswith("TripleFit_"):
+                if img_file.startswith("Full") or img_file.startswith("Rescaled"):
                     st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
 
-        # Display fitted parameters and provide download option
+            st.subheader("Fit Plots:")
+            for img_file in sorted(os.listdir(output_dir)):
+                if img_file.startswith("Fit_"):
+                    st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
+
         csv_path = os.path.join(workflow.output_folder, base_name, "Fit_Params.csv")
         if os.path.exists(csv_path):
             st.subheader("Fitted Parameters:")
@@ -55,3 +55,7 @@ if uploaded_files:
                 file_name="Fit_Params.csv",
                 key=f"download_btn_{uploaded_file.name}"
             )
+
+        if k_comparison_df is not None:
+            st.subheader("Comparison of k-values:")
+            st.dataframe(k_comparison_df)
