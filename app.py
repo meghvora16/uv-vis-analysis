@@ -8,6 +8,12 @@ logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
+# Add a dropdown menu for selecting the exponential type
+exp_type = st.selectbox(
+    "Select Exponential Type",
+    ["Single Exponential", "Double Exponential", "Triple Exponential", "All of the above"]
+)
+
 uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
 save_dir = "uploaded"
 os.makedirs(save_dir, exist_ok=True)
@@ -24,8 +30,8 @@ if uploaded_files:
 
         # Run the analysis for this file
         with st.spinner(f"Running analysis on {uploaded_file.name}..."):
-            # Capture returned comparison result from fit_and_plot
-            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths)
+            # Adapt the workflow based on the selected exponential type
+            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths, exp_type)
 
         st.success(f"Analysis complete for {uploaded_file.name}!")
 
