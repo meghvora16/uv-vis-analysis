@@ -61,7 +61,3 @@ if uploaded_files:
                 file_name="Fit_Params.csv",
                 key=f"download_btn_{uploaded_file.name}"
             )
-
-        if k_comparison_df is not None:
-            st.subheader("Comparison of k-values:")
-            st.dataframe(k_comparison_df)
