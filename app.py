@@ -9,6 +9,12 @@ st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 st.subheader("Dr. Joanna Procelewska, ST/HZA-CMB")
 
+# Dropdown menu for selecting the exponential type
+exp_type = st.selectbox(
+    "Select Exponential Fitting Type",
+    ["Please select an option", "Single Exponential", "Double Exponential", "Triple Exponential"]
+)
+
 uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
 save_dir = "uploaded"
 os.makedirs(save_dir, exist_ok=True)
@@ -25,8 +31,8 @@ if uploaded_files:
 
         # Run the analysis for this file
         with st.spinner(f"Running analysis on {uploaded_file.name}..."):
-            # Capture returned comparison result from fit_and_plot
-            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths)
+            # Pass the exponential type to `fit_and_plot`
+            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths, exp_type)
 
         st.success(f"Analysis complete for {uploaded_file.name}!")
 
@@ -38,12 +44,12 @@ if uploaded_files:
             st.subheader("Spectrum Plots:")
             for img_file in sorted(os.listdir(output_dir)):
                 if img_file.startswith("Full") or img_file.startswith("Rescaled"):
-                    st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
+                    st.image(os.path.join(output_dir, img_file), caption=img_file, use_container_width=True)
 
             st.subheader("Fit Plots:")
             for img_file in sorted(os.listdir(output_dir)):
                 if img_file.startswith("Fit_"):
-                    st.image(os.path.join(output_dir, img_file), caption=img_file, use_column_width=True)
+                    st.image(os.path.join(output_dir, img_file), caption=img_file, use_container_width=True)
 
         csv_path = os.path.join(workflow.output_folder, base_name, "Fit_Params.csv")
         if os.path.exists(csv_path):

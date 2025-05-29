@@ -38,7 +38,7 @@ def create_directory(directory):
 def format_to_exponential(value):
     return f"{value:.3e}"
 
-def fit_and_plot(filepath, target_wavelengths):
+def fit_and_plot(filepath, target_wavelengths, exp_type):
     base_name = os.path.splitext(os.path.basename(filepath))[0]
     create_directory(output_folder)
     df = load_and_clean(filepath)
@@ -48,7 +48,6 @@ def fit_and_plot(filepath, target_wavelengths):
     create_directory(plot_dir)
 
     fit_params_list = []
-    decay_constants_dict = {}
 
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
@@ -58,73 +57,66 @@ def fit_and_plot(filepath, target_wavelengths):
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
-        # Single exponential fit
-        try:
-            popt_single, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
-            y_fit_single = single_exp(x_vals, *popt_single)
-            r2_single = r2_score(y_vals, y_fit_single)
-            ax.plot(x_vals, y_fit_single, 'g--', label=f"Single Exp Fit\n$R^2$={r2_single:.3f}")
-        except RuntimeError:
-            r2_single = -np.inf
-            popt_single = None
+        # Fit according to the selected exponential type
+        if exp_type == "Single Exponential":
+            try:
+                popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
+                y_fit = single_exp(x_vals, *popt)
+                r2 = r2_score(y_vals, y_fit)
+                ax.plot(x_vals, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
+                fit_params_list.append({
+                    "Spectrum": base_name,
+                    "Wavelength (nm)": target_wavelength,
+                    "Model": "Single",
+                    "A": format_to_exponential(popt[0]),
+                    "k": format_to_exponential(popt[1]),
+                    "C": format_to_exponential(popt[2]),
+                    "R²": format_to_exponential(r2)
+                })
+            except RuntimeError:
+                st.error(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
 
-        # Double exponential fit
-        try:
-            popt_double, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
-            y_fit_double = double_exp(x_vals, *popt_double)
-            r2_double = r2_score(y_vals, y_fit_double)
-            ax.plot(x_vals, y_fit_double, 'r--', label=f"Double Exp Fit\n$R^2$={r2_double:.3f}")
-        except RuntimeError:
-            r2_double = -np.inf
-            popt_double = None
-        
-        # Triple exponential fit
-        try:
-            popt_triple, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
-            y_fit_triple = triple_exp(x_vals, *popt_triple)
-            r2_triple = r2_score(y_vals, y_fit_triple)
-            ax.plot(x_vals, y_fit_triple, 'b--', label=f"Triple Exp Fit\n$R^2$={r2_triple:.3f}")
-        except RuntimeError:
-            r2_triple = -np.inf
-            popt_triple = None
+        elif exp_type == "Double Exponential":
+            try:
+                popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
+                y_fit = double_exp(x_vals, *popt)
+                r2 = r2_score(y_vals, y_fit)
+                ax.plot(x_vals, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
+                fit_params_list.append({
+                    "Spectrum": base_name,
+                    "Wavelength (nm)": target_wavelength,
+                    "Model": "Double",
+                    "A1": format_to_exponential(popt[0]),
+                    "k1": format_to_exponential(popt[1]),
+                    "A2": format_to_exponential(popt[2]),
+                    "k2": format_to_exponential(popt[3]),
+                    "C": format_to_exponential(popt[4]),
+                    "R²": format_to_exponential(r2)
+                })
+            except RuntimeError:
+                st.error(f"Double exponential fit failed for wavelength {target_wavelength} nm.")
 
-        # Collect fit data (here, just storing successful results)
-        if popt_single is not None:
-            fit_params_list.append({
-                "Spectrum": base_name,
-                "Wavelength (nm)": target_wavelength,
-                "Model": "Single",
-                "A": format_to_exponential(popt_single[0]),
-                "k": format_to_exponential(popt_single[1]),
-                "C": format_to_exponential(popt_single[2]),
-                "R²": format_to_exponential(r2_single)
-            })
-        if popt_double is not None:
-            fit_params_list.append({
-                "Spectrum": base_name,
-                "Wavelength (nm)": target_wavelength,
-                "Model": "Double",
-                "A1": format_to_exponential(popt_double[0]),
-                "k1": format_to_exponential(popt_double[1]),
-                "A2": format_to_exponential(popt_double[2]),
-                "k2": format_to_exponential(popt_double[3]),
-                "C": format_to_exponential(popt_double[4]),
-                "R²": format_to_exponential(r2_double)
-            })
-        if popt_triple is not None:
-            fit_params_list.append({
-                "Spectrum": base_name,
-                "Wavelength (nm)": target_wavelength,
-                "Model": "Triple",
-                "A1": format_to_exponential(popt_triple[0]),
-                "k1": format_to_exponential(popt_triple[1]),
-                "A2": format_to_exponential(popt_triple[2]),
-                "k2": format_to_exponential(popt_triple[3]),
-                "A3": format_to_exponential(popt_triple[4]),
-                "k3": format_to_exponential(popt_triple[5]),
-                "C": format_to_exponential(popt_triple[6]),
-                "R²": format_to_exponential(r2_triple)
-            })
+        elif exp_type == "Triple Exponential":
+            try:
+                popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
+                y_fit = triple_exp(x_vals, *popt)
+                r2 = r2_score(y_vals, y_fit)
+                ax.plot(x_vals, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}")
+                fit_params_list.append({
+                    "Spectrum": base_name,
+                    "Wavelength (nm)": target_wavelength,
+                    "Model": "Triple",
+                    "A1": format_to_exponential(popt[0]),
+                    "k1": format_to_exponential(popt[1]),
+                    "A2": format_to_exponential(popt[2]),
+                    "k2": format_to_exponential(popt[3]),
+                    "A3": format_to_exponential(popt[4]),
+                    "k3": format_to_exponential(popt[5]),
+                    "C": format_to_exponential(popt[6]),
+                    "R²": format_to_exponential(r2)
+                })
+            except RuntimeError:
+                st.error(f"Triple exponential fit failed for wavelength {target_wavelength} nm.")
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
         ax.set_xlabel("Spectrum Index")
@@ -135,9 +127,10 @@ def fit_and_plot(filepath, target_wavelengths):
         plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
         plt.close()
 
-    # Convert fit_params_list to a dataframe ensuring strings are used for scientific notation
     fit_params_df = pd.DataFrame(fit_params_list, dtype=str)
     fit_params_df.to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
+
+    return fit_params_df
 
 def plot_spectra(df, filename, label):
     wavelengths = df.iloc[:, 0].to_numpy()
