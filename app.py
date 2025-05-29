@@ -10,8 +10,8 @@ st.title("UV-Vis Spectrum Analyzer")
 
 # Dropdown menu for selecting the exponential type
 exp_type = st.selectbox(
-    "Select Exponential Type",
-    ["Single Exponential", "Double Exponential", "Triple Exponential"]
+    "Select Exponential Fitting Type",
+    ["Please select an option", "Single Exponential", "Double Exponential", "Triple Exponential"]
 )
 
 uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"], accept_multiple_files=True)
