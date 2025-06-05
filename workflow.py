@@ -42,7 +42,6 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
     base_name = os.path.splitext(os.path.basename(filepath))[0]
     create_directory(output_folder)
     df = load_and_clean(filepath)
-    plot_spectra(df, base_name, base_name)
 
     plot_dir = os.path.join(output_folder, base_name, "plots")
     create_directory(plot_dir)
@@ -54,35 +53,38 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         y_vals = df.iloc[idx, 1:].to_numpy()
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float)
 
+        # Add this line to create a dense sampling of x-values for smooth curve plotting
+        x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)  # Generating 500 points for smooth fit
+
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
-        # Fit according to the selected exponential type
-        # Single Exponential fitting section in fit_and_plot function
         if exp_type == "Single Exponential":
             try:
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
-                y_fit = single_exp(x_vals, *popt)
-                r2 = r2_score(y_vals, y_fit)
-                ax.plot(x_vals, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
+                y_fit = single_exp(x_dense, *popt)  # Use x_dense for smooth curve plotting
+                r2 = r2_score(y_vals, single_exp(x_vals, *popt))
+                ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
+                
                 fit_params_list.append({
-                "Spectrum": base_name,
-                "Wavelength (nm)": target_wavelength,
-                "Model": "Single",
-                "A": format_to_exponential(popt[0]),
-                "k": format_to_exponential(popt[1]),
-                "C": format_to_exponential(popt[2]),
-                "R²": format_to_exponential(r2)
+                    "Spectrum": base_name,
+                    "Wavelength (nm)": target_wavelength,
+                    "Model": "Single",
+                    "A": format_to_exponential(popt[0]),
+                    "k": format_to_exponential(popt[1]),
+                    "C": format_to_exponential(popt[2]),
+                    "R²": format_to_exponential(r2)
                 })
             except RuntimeError:
-                st.error(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
+                print(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
 
         elif exp_type == "Double Exponential":
             try:
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
-                y_fit = double_exp(x_vals, *popt)
-                r2 = r2_score(y_vals, y_fit)
-                ax.plot(x_vals, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
+                y_fit = double_exp(x_dense, *popt)  # Use x_dense for smooth curve plotting
+                r2 = r2_score(y_vals, double_exp(x_vals, *popt))
+                ax.plot(x_dense, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
+                
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -95,14 +97,15 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "R²": format_to_exponential(r2)
                 })
             except RuntimeError:
-                st.error(f"Double exponential fit failed for wavelength {target_wavelength} nm.")
+                print(f"Double exponential fit failed for wavelength {target_wavelength} nm.")
 
         elif exp_type == "Triple Exponential":
             try:
                 popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
-                y_fit = triple_exp(x_vals, *popt)
-                r2 = r2_score(y_vals, y_fit)
-                ax.plot(x_vals, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}")
+                y_fit = triple_exp(x_dense, *popt)  # Use x_dense for smooth curve plotting
+                r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
+                ax.plot(x_dense, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}")
+                
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -117,7 +120,21 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "R²": format_to_exponential(r2)
                 })
             except RuntimeError:
-                st.error(f"Triple exponential fit failed for wavelength {target_wavelength} nm.")
+                print(f"Triple exponential fit failed for wavelength {target_wavelength} nm.")
+
+        ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
+        ax.set_xlabel("Spectrum Index")
+        ax.set_ylabel("Absorbance")
+        ax.grid(True)
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
+        plt.close()
+
+    fit_params_df = pd.DataFrame(fit_params_list, dtype=str)
+    fit_params_df.to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
+
+    return fit_params_df
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
         ax.set_xlabel("Spectrum Index")
