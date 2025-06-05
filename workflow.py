@@ -53,19 +53,17 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         y_vals = df.iloc[idx, 1:].to_numpy()
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float)
 
-        # Add this line to create a dense sampling of x-values for smooth curve plotting
-        x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)  # Generating 500 points for smooth fit
+        x_dense = np.linspace(x_vals.min(), x_vals.max(), 500) # Improved for smooth plotting
 
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
-        if exp_type == "Single Exponential":
-            try:
+        try:
+            if exp_type == "Single Exponential":
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
-                y_fit = single_exp(x_dense, *popt)  # Use x_dense for smooth curve plotting
+                y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
                 ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
-                
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -75,16 +73,11 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "C": format_to_exponential(popt[2]),
                     "R²": format_to_exponential(r2)
                 })
-            except RuntimeError:
-                print(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
-
-        elif exp_type == "Double Exponential":
-            try:
+            elif exp_type == "Double Exponential":
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
-                y_fit = double_exp(x_dense, *popt)  # Use x_dense for smooth curve plotting
+                y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
                 ax.plot(x_dense, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
-                
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -96,16 +89,11 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "C": format_to_exponential(popt[4]),
                     "R²": format_to_exponential(r2)
                 })
-            except RuntimeError:
-                print(f"Double exponential fit failed for wavelength {target_wavelength} nm.")
-
-        elif exp_type == "Triple Exponential":
-            try:
+            elif exp_type == "Triple Exponential":
                 popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
-                y_fit = triple_exp(x_dense, *popt)  # Use x_dense for smooth curve plotting
+                y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
                 ax.plot(x_dense, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}")
-                
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -119,22 +107,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "C": format_to_exponential(popt[6]),
                     "R²": format_to_exponential(r2)
                 })
-            except RuntimeError:
-                print(f"Triple exponential fit failed for wavelength {target_wavelength} nm.")
-
-        ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
-        ax.set_xlabel("Spectrum Index")
-        ax.set_ylabel("Absorbance")
-        ax.grid(True)
-        ax.legend()
-        plt.tight_layout()
-        plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
-        plt.close()
-
-    fit_params_df = pd.DataFrame(fit_params_list, dtype=str)
-    fit_params_df.to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
-
-    return fit_params_df
+        except RuntimeError:
+            print(f"{exp_type} fit failed for wavelength {target_wavelength} nm.")
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
         ax.set_xlabel("Spectrum Index")
@@ -155,9 +129,8 @@ def plot_spectra(df, filename, label):
     rescaled_dir = os.path.join(output_folder, filename, "plots")
     create_directory(rescaled_dir)
 
-    plt.figure(figsize=(10, 5))
-    num_columns = df.shape[1]
-    for i in range(1, num_columns):
+    fig = plt.figure(figsize=(10, 5))
+    for i in range(1, df.shape[1]):
         plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
 
     plt.xlabel("Wavelength (nm)")
@@ -169,8 +142,8 @@ def plot_spectra(df, filename, label):
     plt.savefig(os.path.join(rescaled_dir, f"Full_Spectrum_{label}.png"), dpi=300)
     plt.close()
 
-    plt.figure(figsize=(10, 5))
-    for i in range(1, num_columns):
+    fig = plt.figure(figsize=(10, 5))
+    for i in range(1, df.shape[1]):
         plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
 
     plt.ylim(0, 1)
