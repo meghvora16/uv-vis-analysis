@@ -61,20 +61,21 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         # Single Exponential fitting section in fit_and_plot function
         if exp_type == "Single Exponential":
             try:
-                # Modify this line to include initial guesses and bounds
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
-        
-                # Change to:
-                initial_guesses = [1.0, 0.1, 0.0]  # Example initial parameters
-                bounds = ([0, 0, -np.inf], [np.inf, np.inf, np.inf])  # Example bounds
-                popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guesses, bounds=bounds, maxfev=10000)
-        
                 y_fit = single_exp(x_vals, *popt)
                 r2 = r2_score(y_vals, y_fit)
                 ax.plot(x_vals, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
-                ...
+                fit_params_list.append({
+                "Spectrum": base_name,
+                "Wavelength (nm)": target_wavelength,
+                "Model": "Single",
+                "A": format_to_exponential(popt[0]),
+                "k": format_to_exponential(popt[1]),
+                "C": format_to_exponential(popt[2]),
+                "R²": format_to_exponential(r2)
+                })
             except RuntimeError:
-                print(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
+                st.error(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
 
         elif exp_type == "Double Exponential":
             try:
