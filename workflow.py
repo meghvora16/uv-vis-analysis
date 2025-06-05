@@ -58,16 +58,21 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
         # Fit according to the selected exponential type
+        # Single Exponential fitting section in fit_and_plot function
         if exp_type == "Single Exponential":
             try:
-        # Set initial guesses and bounds
+                # Modify this line to include initial guesses and bounds
+                popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
+        
+                # Change to:
                 initial_guesses = [1.0, 0.1, 0.0]  # Example initial parameters
                 bounds = ([0, 0, -np.inf], [np.inf, np.inf, np.inf])  # Example bounds
-
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guesses, bounds=bounds, maxfev=10000)
+        
                 y_fit = single_exp(x_vals, *popt)
                 r2 = r2_score(y_vals, y_fit)
                 ax.plot(x_vals, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
+                ...
             except RuntimeError:
                 print(f"Single exponential fit failed for wavelength {target_wavelength} nm.")
 
