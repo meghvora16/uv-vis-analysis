@@ -4,12 +4,9 @@ import os
 import workflow
 
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
-logo_image_path = "Schaeffler_Logo.png"
-st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 st.subheader("Dr. Joanna Procelewska, ST/HZA-CMB")
 
-# Dropdown menu for selecting the exponential type
 exp_type = st.selectbox(
     "Select Exponential Fitting Type",
     ["Please select an option", "Single Exponential", "Double Exponential", "Triple Exponential"]
@@ -19,6 +16,8 @@ uploaded_files = st.file_uploader("Upload a CSV or TXT file", type=["csv", "txt"
 save_dir = "uploaded"
 os.makedirs(save_dir, exist_ok=True)
 
+workflow.target_wavelengths = [400, 514]
+
 if uploaded_files:
     for uploaded_file in uploaded_files:
         file_path = os.path.join(save_dir, uploaded_file.name)
@@ -26,18 +25,16 @@ if uploaded_files:
             f.write(uploaded_file.getbuffer())
         st.success(f"File uploaded: {uploaded_file.name}")
 
-        # Set target wavelengths
-        workflow.target_wavelengths = [400, 514]
-
-        # Run the analysis for this file
         with st.spinner(f"Running analysis on {uploaded_file.name}..."):
-            # Pass the exponential type to `fit_and_plot`
-            k_comparison_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths, exp_type)
+            try:
+                fit_params_df = workflow.fit_and_plot(file_path, workflow.target_wavelengths, exp_type)
+            except Exception as e:
+                st.error(f"An error occurred during analysis: {str(e)}")
+                continue
 
         st.success(f"Analysis complete for {uploaded_file.name}!")
 
-        # Define output directory for plots
-        base_name = os.path.splitext(os.path.basename(file_path))[0]
+        base_name = os.path.splitext(uploaded_file.name)[0]
         output_dir = os.path.join(workflow.output_folder, base_name, "plots")
 
         if os.path.exists(output_dir):
@@ -59,6 +56,5 @@ if uploaded_files:
             st.download_button(
                 "Download Fit_Params.csv",
                 df.to_csv(index=False),
-                file_name="Fit_Params.csv",
-                key=f"download_btn_{uploaded_file.name}"
+                file_name=f"Fit_Params_{uploaded_file.name}.csv"
             )

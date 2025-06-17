@@ -24,11 +24,16 @@ def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + A3 * np.exp(-k3 * t) + C
 
 def load_and_clean(filepath):
-    df = pd.read_csv(filepath, sep=None, engine='python', encoding='latin1')
-    for column in df.columns:
-        if df[column].dtype == 'object':
-            df[column] = df[column].str.replace(',', '.')
-    df = df.apply(pd.to_numeric, errors='ignore')
+    try:
+        df = pd.read_csv(filepath, sep=None, engine='python', encoding='latin1')
+        for column in df.columns:
+            if df[column].dtype == 'object':
+                df[column] = df[column].str.replace(',', '.')
+        df = df.apply(pd.to_numeric, errors='ignore')
+    except Exception as e:
+        print(f"Error loading the file {filepath}: {e}")
+        return None
+    
     return df
 
 def create_directory(directory):
@@ -40,11 +45,13 @@ def format_to_exponential(value):
 
 def fit_and_plot(filepath, target_wavelengths, exp_type):
     base_name = os.path.splitext(os.path.basename(filepath))[0]
-    create_directory(output_folder)
+    create_directory(os.path.join(output_folder, base_name, "plots"))
     df = load_and_clean(filepath)
 
-    plot_dir = os.path.join(output_folder, base_name, "plots")
-    create_directory(plot_dir)
+    if df is None:
+        return pd.DataFrame()
+
+    plot_spectra(df, base_name)
 
     fit_params_list = []
 
@@ -52,8 +59,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float)
-
-        x_dense = np.linspace(x_vals.min(), x_vals.max(), 500) # Improved for smooth plotting
+        x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)
 
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.scatter(x_vals, y_vals, color="black", label="Data")
@@ -116,7 +122,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         ax.grid(True)
         ax.legend()
         plt.tight_layout()
-        plt.savefig(os.path.join(plot_dir, f"Fit_{target_wavelength}nm.png"))
+        plt.savefig(os.path.join(output_folder, base_name, "plots", f"Fit_{target_wavelength}nm.png"))
         plt.close()
 
     fit_params_df = pd.DataFrame(fit_params_list, dtype=str)
@@ -124,35 +130,38 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
 
     return fit_params_df
 
-def plot_spectra(df, filename, label):
+def plot_spectra(df, label):
+    global output_folder
     wavelengths = df.iloc[:, 0].to_numpy()
-    rescaled_dir = os.path.join(output_folder, filename, "plots")
-    create_directory(rescaled_dir)
-
-    fig = plt.figure(figsize=(10, 5))
+    plot_dir = os.path.join(output_folder, label, "plots")
+    create_directory(plot_dir)
+    
+    # Full Spectrum Plot
+    fig, ax = plt.subplots(figsize=(10, 5))
     for i in range(1, df.shape[1]):
-        plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
+        ax.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
 
-    plt.xlabel("Wavelength (nm)")
-    plt.ylabel("Absorbance")
-    plt.title(f"Full Spectrum - {label}")
-    plt.legend(loc="upper right", fontsize=8, ncol=2)
-    plt.grid()
+    ax.set_xlabel("Wavelength (nm)")
+    ax.set_ylabel("Absorbance")
+    ax.set_title(f"Full Spectrum - {label}")
+    ax.legend(loc="upper right", fontsize=8, ncol=2)
+    ax.grid()
     plt.tight_layout()
-    plt.savefig(os.path.join(rescaled_dir, f"Full_Spectrum_{label}.png"), dpi=300)
+    plt.savefig(os.path.join(plot_dir, f"Full_Spectrum_{label}.png"), dpi=300)
     plt.close()
 
-    fig = plt.figure(figsize=(10, 5))
+    # Rescaled Spectrum Plot
+    fig, ax = plt.subplots(figsize=(10, 5))
     for i in range(1, df.shape[1]):
-        plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
+        ax.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
 
-    plt.ylim(0, 1)
-    plt.xlim(200, 700)
-    plt.xlabel("Wavelength (nm)")
-    plt.ylabel("Absorbance")
-    plt.title(f"Rescaled Spectrum — {label}")
-    plt.grid(True)
-    plt.legend(fontsize=8, ncol=2)
+    ax.set_ylim(0, 1)
+    ax.set_xlim(200, 700)
+    ax.set_xlabel("Wavelength (nm)")
+    ax.set_ylabel("Absorbance")
+    ax.set_title(f"Rescaled Spectrum — {label}")
+    ax.grid(True)
+    ax.legend(fontsize=8, ncol=2)
     plt.tight_layout()
-    plt.savefig(os.path.join(rescaled_dir, f"Rescaled_Spectrum_{label}.png"), dpi=300)
+    plt.savefig(os.path.join(plot_dir, f"Rescaled_Spectrum_{label}.png"), dpi=300)
     plt.close()
