@@ -124,11 +124,13 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
 
     return fit_params_df
 
-def plot_spectra(df, filename, label):
+def plot_spectra(df, label, exp_type):
+    global output_folder
     wavelengths = df.iloc[:, 0].to_numpy()
-    rescaled_dir = os.path.join(output_folder, filename, "plots")
-    create_directory(rescaled_dir)
-
+    plot_dir = os.path.join(output_folder, label, "plots")
+    create_directory(plot_dir)
+    
+    # Full Spectrum Plot
     fig = plt.figure(figsize=(10, 5))
     for i in range(1, df.shape[1]):
         plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
@@ -139,9 +141,10 @@ def plot_spectra(df, filename, label):
     plt.legend(loc="upper right", fontsize=8, ncol=2)
     plt.grid()
     plt.tight_layout()
-    plt.savefig(os.path.join(rescaled_dir, f"Full_Spectrum_{label}.png"), dpi=300)
+    plt.savefig(os.path.join(plot_dir, f"Full_Spectrum_{label}.png"), dpi=300)
     plt.close()
 
+    # Rescaled Spectrum Plot
     fig = plt.figure(figsize=(10, 5))
     for i in range(1, df.shape[1]):
         plt.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
@@ -154,5 +157,5 @@ def plot_spectra(df, filename, label):
     plt.grid(True)
     plt.legend(fontsize=8, ncol=2)
     plt.tight_layout()
-    plt.savefig(os.path.join(rescaled_dir, f"Rescaled_Spectrum_{label}.png"), dpi=300)
+    plt.savefig(os.path.join(plot_dir, f"Rescaled_Spectrum_{label}.png"), dpi=300)
     plt.close()
