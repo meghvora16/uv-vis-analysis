@@ -4,6 +4,8 @@ import os
 import workflow
 
 st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
+logo_image_path = "Schaeffler_Logo.png"
+st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
 
 exp_type = st.selectbox(
