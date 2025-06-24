@@ -12,15 +12,12 @@ def r2_score(y_true, y_pred):
     return 1 - (ss_res / ss_tot)
 
 def single_exp(t, A, k, C):
-    t = np.array(t, dtype=float)
     return A * np.exp(-k * t) + C
 
 def double_exp(t, A1, k1, A2, k2, C):
-    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + C
 
 def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
-    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + A3 * np.exp(-k3 * t) + C
 
 def load_and_clean(filepath):
@@ -41,7 +38,10 @@ def create_directory(directory):
         os.makedirs(directory)
 
 def format_to_exponential(value):
-    return f"{value:.3e}"
+    try:
+        return f"{value:.3e}"
+    except:
+        return "NaN"
 
 def fit_and_plot(filepath, target_wavelengths, exp_type):
     base_name = os.path.splitext(os.path.basename(filepath))[0]
@@ -58,7 +58,6 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
-        # Convert index to actual time (360 seconds per spectrum)
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float) * 360
         x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)
 
@@ -71,7 +70,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
-                half_life = np.log(2) / popt[1]  # Calculate half-life
+                half_life = np.log(2) / popt[1] if popt[1] > 0 else np.nan
+                print(f"Fitting Parameters (Single): A={popt[0]}, k={popt[1]}, C={popt[2]}, Half-life={half_life}")
                 ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2}}$={half_life:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
@@ -88,8 +88,9 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
-                half_life1 = np.log(2) / popt[1]
-                half_life2 = np.log(2) / popt[3]
+                half_life1 = np.log(2) / popt[1] if popt[1] > 0 else np.nan
+                half_life2 = np.log(2) / popt[3] if popt[3] > 0 else np.nan
+                print(f"Fitting Parameters (Double): A1={popt[0]}, k1={popt[1]}, A2={popt[2]}, k2={popt[3]}, C={popt[4]}, Half-lives={half_life1}, {half_life2}")
                 ax.plot(x_dense, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2,1}}$={half_life1:.2f}s\n$t_{{1/2,2}}$={half_life2:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
@@ -109,9 +110,10 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                 popt, _ = curve_fit(triple_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
-                half_life1 = np.log(2) / popt[1]
-                half_life2 = np.log(2) / popt[3]
-                half_life3 = np.log(2) / popt[5]
+                half_life1 = np.log(2) / popt[1] if popt[1] > 0 else np.nan
+                half_life2 = np.log(2) / popt[3] if popt[3] > 0 else np.nan
+                half_life3 = np.log(2) / popt[5] if popt[5] > 0 else np.nan
+                print(f"Fitting Parameters (Triple): A1={popt[0]}, k1={popt[1]}, A2={popt[2]}, k2={popt[3]}, A3={popt[4]}, k3={popt[5]}, C={popt[6]}, Half-lives={half_life1}, {half_life2}, {half_life3}")
                 ax.plot(x_dense, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2,1}}$={half_life1:.2f}s\n$t_{{1/2,2}}$={half_life2:.2f}s\n$t_{{1/2,3}}$={half_life3:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
