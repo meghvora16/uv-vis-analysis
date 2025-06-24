@@ -66,8 +66,11 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         ax.scatter(x_vals, y_vals, color="black", label="Data")
 
         try:
+            # Add sensible initial guesses based on your data characteristics
             if exp_type == "Single Exponential":
-                popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
+                initial_guess = [max(y_vals) - min(y_vals), 0.01, min(y_vals)]
+                bounds = ([0, 0, -np.inf], [np.inf, np.inf, np.inf])
+                popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
                 half_life = np.log(2) / popt[1]  # Calculate half-life
@@ -80,10 +83,12 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "k": format_to_exponential(popt[1]),
                     "C": format_to_exponential(popt[2]),
                     "R²": format_to_exponential(r2),
-                    "Half-life (s)": format_to_exponential(half_life)  # Add half-life to the params
+                    "Half-life (s)": format_to_exponential(half_life)
                 })
             elif exp_type == "Double Exponential":
-                popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
+                initial_guess = [max(y_vals)/2, 0.01, max(y_vals)/2, 0.001, min(y_vals)]
+                bounds = ([0, 0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf, np.inf])
+                popt, _ = curve_fit(double_exp, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
                 y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
                 half_life1 = np.log(2) / popt[1]
@@ -103,7 +108,9 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life2 (s)": format_to_exponential(half_life2)
                 })
             elif exp_type == "Triple Exponential":
-                popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
+                initial_guess = [max(y_vals)/3, 0.01, max(y_vals)/3, 0.001, max(y_vals)/3, 0.0001, min(y_vals)]
+                bounds = ([0, 0, 0, 0, 0, 0, -np.inf], [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
+                popt, _ = curve_fit(triple_exp, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
                 y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
                 half_life1 = np.log(2) / popt[1]
