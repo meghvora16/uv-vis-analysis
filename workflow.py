@@ -12,12 +12,15 @@ def r2_score(y_true, y_pred):
     return 1 - (ss_res / ss_tot)
 
 def single_exp(t, A, k, C):
+    t = np.array(t, dtype=float)
     return A * np.exp(-k * t) + C
 
 def double_exp(t, A1, k1, A2, k2, C):
+    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + C
 
 def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
+    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + A3 * np.exp(-k3 * t) + C
 
 def load_and_clean(filepath):
@@ -66,68 +69,62 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
 
         try:
             if exp_type == "Single Exponential":
-                initial_guess = [max(y_vals) - min(y_vals), 0.001, min(y_vals)]
+                initial_guess = [max(y_vals) - min(y_vals), 0.01, min(y_vals)]
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
-                k = popt[1]
-                half_life = np.log(2) / k if k > 0 else np.nan
-                print(f"Single Exponential fit: A={popt[0]}, k={popt[1]}, C={popt[2]}, Half-life={half_life}")
+                half_life = np.log(2) / abs(popt[1])  # Ensure k > 0 for valid half-life
                 ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2}}$={half_life:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
                     "Model": "Single",
                     "A": format_to_exponential(popt[0]),
-                    "k": format_to_exponential(k),
+                    "k": format_to_exponential(popt[1]),
                     "C": format_to_exponential(popt[2]),
                     "R²": format_to_exponential(r2),
                     "Half-life (s)": format_to_exponential(half_life)
                 })
             elif exp_type == "Double Exponential":
-                initial_guess = [max(y_vals)/2, 0.001, max(y_vals)/2, 0.0001, min(y_vals)]
+                initial_guess = [max(y_vals)/2, 0.01, max(y_vals)/2, 0.001, min(y_vals)]
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
-                k1, k2 = popt[1], popt[3]
-                half_life1 = np.log(2) / k1 if k1 > 0 else np.nan
-                half_life2 = np.log(2) / k2 if k2 > 0 else np.nan
-                print(f"Double Exponential fit: A1={popt[0]}, k1={k1}, A2={popt[2]}, k2={k2}, C={popt[4]}")
+                half_life1 = np.log(2) / abs(popt[1])
+                half_life2 = np.log(2) / abs(popt[3])
                 ax.plot(x_dense, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2,1}}$={half_life1:.2f}s\n$t_{{1/2,2}}$={half_life2:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
                     "Model": "Double",
                     "A1": format_to_exponential(popt[0]),
-                    "k1": format_to_exponential(k1),
+                    "k1": format_to_exponential(popt[1]),
                     "A2": format_to_exponential(popt[2]),
-                    "k2": format_to_exponential(k2),
+                    "k2": format_to_exponential(popt[3]),
                     "C": format_to_exponential(popt[4]),
                     "R²": format_to_exponential(r2),
                     "Half-life1 (s)": format_to_exponential(half_life1),
                     "Half-life2 (s)": format_to_exponential(half_life2)
                 })
             elif exp_type == "Triple Exponential":
-                initial_guess = [max(y_vals)/3, 0.001, max(y_vals)/3, 0.0001, max(y_vals)/3, 0.00001, min(y_vals)]
+                initial_guess = [max(y_vals)/3, 0.01, max(y_vals)/3, 0.001, max(y_vals)/3, 0.0001, min(y_vals)]
                 popt, _ = curve_fit(triple_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
-                k1, k2, k3 = popt[1], popt[3], popt[5]
-                half_life1 = np.log(2) / k1 if k1 > 0 else np.nan
-                half_life2 = np.log(2) / k2 if k2 > 0 else np.nan
-                half_life3 = np.log(2) / k3 if k3 > 0 else np.nan
-                print(f"Triple Exponential fit: A1={popt[0]}, k1={k1}, A2={popt[2]}, k2={k2}, A3={popt[4]}, k3={k3}, C={popt[6]}")
+                half_life1 = np.log(2) / abs(popt[1])
+                half_life2 = np.log(2) / abs(popt[3])
+                half_life3 = np.log(2) / abs(popt[5])
                 ax.plot(x_dense, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2,1}}$={half_life1:.2f}s\n$t_{{1/2,2}}$={half_life2:.2f}s\n$t_{{1/2,3}}$={half_life3:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
                     "Model": "Triple",
                     "A1": format_to_exponential(popt[0]),
-                    "k1": format_to_exponential(k1),
+                    "k1": format_to_exponential(popt[1]),
                     "A2": format_to_exponential(popt[2]),
-                    "k2": format_to_exponential(k2),
+                    "k2": format_to_exponential(popt[3]),
                     "A3": format_to_exponential(popt[4]),
-                    "k3": format_to_exponential(k3),
+                    "k3": format_to_exponential(popt[5]),
                     "C": format_to_exponential(popt[6]),
                     "R²": format_to_exponential(r2),
                     "Half-life1 (s)": format_to_exponential(half_life1),
