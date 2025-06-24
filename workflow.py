@@ -4,13 +4,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
+# Define output folder to save results.
 output_folder = "Combined_Fits"
 
+# Calculate R² for the fit.
 def r2_score(y_true, y_pred):
     ss_res = np.sum((y_true - y_pred) ** 2)
     ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
     return 1 - (ss_res / ss_tot)
 
+# Define model functions for single, double, and triple exponentials.
 def single_exp(t, A, k, C):
     return A * np.exp(-k * t) + C
 
@@ -20,6 +23,7 @@ def double_exp(t, A1, k1, A2, k2, C):
 def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + A3 * np.exp(-k3 * t) + C
 
+# Load and clean data from a file.
 def load_and_clean(filepath):
     try:
         df = pd.read_csv(filepath, sep=None, engine='python', encoding='latin1')
@@ -30,19 +34,21 @@ def load_and_clean(filepath):
     except Exception as e:
         print(f"Error loading the file {filepath}: {e}")
         return None
-    
     return df
 
+# Create directory if it doesn't exist.
 def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+# Format to exponential notation; handle exceptions for non-numeric conversions.
 def format_to_exponential(value):
     try:
         return f"{value:.3e}"
     except:
         return "NaN"
 
+# Fit the model, plot, and save results for given file.
 def fit_and_plot(filepath, target_wavelengths, exp_type):
     base_name = os.path.splitext(os.path.basename(filepath))[0]
     create_directory(os.path.join(output_folder, base_name, "plots"))
@@ -59,7 +65,6 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float) * 360
-        # Increase density for smoother fitting curve
         x_dense = np.linspace(x_vals.min(), x_vals.max(), 2000)
 
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -142,35 +147,35 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         plt.close()
 
     fit_params_df = pd.DataFrame(fit_params_list, dtype=str)
-    fit_params_df.to_csv(os.path.join(output_folder, base_name, "Fit_Params.csv"), index=False)
-
+    fit_params_file = os.path.join(output_folder, base_name, "Fit_Params.csv")
+    fit_params_df.to_csv(fit_params_file, index=False)
+    print(f"Fit parameters saved: {fit_params_file}")
+    
     return fit_params_df
 
 def plot_spectra(df, label):
-    global output_folder
     wavelengths = df.iloc[:, 0].to_numpy()
     plot_dir = os.path.join(output_folder, label, "plots")
     create_directory(plot_dir)
-    
+
     # Full Spectrum Plot
     fig, ax = plt.subplots(figsize=(10, 5))
     for i in range(1, df.shape[1]):
         ax.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
-
     ax.set_xlabel("Wavelength (nm)")
     ax.set_ylabel("Absorbance")
     ax.set_title(f"Full Spectrum - {label}")
     ax.legend(loc="upper right", fontsize=8, ncol=2)
-    ax.grid()
+    ax.grid(True)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, f"Full_Spectrum_{label}.png"), dpi=300)
+    full_spec_file = os.path.join(plot_dir, f"Full_Spectrum_{label}.png")
+    plt.savefig(full_spec_file, dpi=300)
     plt.close()
 
     # Rescaled Spectrum Plot
     fig, ax = plt.subplots(figsize=(10, 5))
     for i in range(1, df.shape[1]):
         ax.plot(wavelengths, df.iloc[:, i], label=f"Spectrum {i}", alpha=0.7)
-
     ax.set_ylim(0, 1)
     ax.set_xlim(200, 700)
     ax.set_xlabel("Wavelength (nm)")
@@ -179,5 +184,6 @@ def plot_spectra(df, label):
     ax.grid(True)
     ax.legend(fontsize=8, ncol=2)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, f"Rescaled_Spectrum_{label}.png"), dpi=300)
+    rescaled_spec_file = os.path.join(plot_dir, f"Rescaled_Spectrum_{label}.png")
+    plt.savefig(rescaled_spec_file, dpi=300)
     plt.close()
