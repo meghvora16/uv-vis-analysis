@@ -23,15 +23,22 @@ def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
 def load_and_clean(filepath):
     try:
         df = pd.read_csv(filepath, sep=None, engine='python', encoding='latin1')
+        if df.empty:
+            print(f"Error loading the file {filepath}: No data found.")
+            return None
         for column in df.columns:
-            if df[column].dtype == 'object':
-                df[column] = df[column].str.replace(',', '.')
-        df = df.apply(pd.to_numeric, errors='ignore')
+            try:
+                df[column] = pd.to_numeric(df[column].str.replace(',', '.'), errors='coerce')
+            except Exception as e:
+                print(f"Error processing column {column}: {e}")
+                return None
+        return df
+    except pd.errors.EmptyDataError:
+        print(f"Error loading the file {filepath}: The file is empty.")
+        return None
     except Exception as e:
         print(f"Error loading the file {filepath}: {e}")
         return None
-    
-    return df
 
 def create_directory(directory):
     if not os.path.exists(directory):
@@ -41,9 +48,7 @@ def format_to_exponential(value):
     return f"{value:.3e}"
 
 def fit_model(x_vals, y_vals, model_fn, initial_guess, bounds, dense_x):
-    """ Common helper function for fitting and calculating fitting information.
-        Returns tuple: popt, y_fit (evaluated on dense_x) and additional info (e.g., half-lives) """
-    # Fit the model using curve_fit with bounds
+    """ Common helper function for fitting and calculating fitting information. """
     popt, _ = curve_fit(model_fn, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
     y_fit = model_fn(dense_x, *popt)
     fitted_y = model_fn(x_vals, *popt)
@@ -59,14 +64,15 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
     if df is None:
         return pd.DataFrame()
 
-    # Produce a full and rescaled spectra plot
     plot_spectra(df, base_name)
-
     fit_params_list = []
 
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy(dtype=float)
+        if len(y_vals) == 0:
+            print(f"No y-values found for wavelength {target_wavelength} nm in {base_name}.")
+            continue
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float) * 360
         x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)
 
