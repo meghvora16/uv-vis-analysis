@@ -12,15 +12,12 @@ def r2_score(y_true, y_pred):
     return 1 - (ss_res / ss_tot)
 
 def single_exp(t, A, k, C):
-    t = np.array(t, dtype=float)
     return A * np.exp(-k * t) + C
 
 def double_exp(t, A1, k1, A2, k2, C):
-    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + C
 
 def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
-    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + A3 * np.exp(-k3 * t) + C
 
 def load_and_clean(filepath):
@@ -62,7 +59,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float) * 360
-        x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)
+        # Increase density for smoother fitting curve
+        x_dense = np.linspace(x_vals.min(), x_vals.max(), 2000)
 
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.scatter(x_vals, y_vals, color="black", label="Data")
@@ -73,7 +71,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
-                half_life = np.log(2) / abs(popt[1])  # Ensure k > 0 for valid half-life
+                half_life = np.log(2) / abs(popt[1])
                 ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2}}$={half_life:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
