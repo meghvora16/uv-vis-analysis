@@ -67,7 +67,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
 
         try:
             if exp_type == "Single Exponential":
-                popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
+                initial_guess = [max(y_vals), 0.001, min(y_vals)]
+                popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
                 half_life = np.log(2) / popt[1]  # Calculate half-life
@@ -83,7 +84,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life (s)": format_to_exponential(half_life)
                 })
             elif exp_type == "Double Exponential":
-                popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
+                initial_guess = [max(y_vals)/2, 0.001, max(y_vals)/2, 0.0001, min(y_vals)]
+                popt, _ = curve_fit(double_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
                 half_life1 = np.log(2) / popt[1]
@@ -103,7 +105,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life2 (s)": format_to_exponential(half_life2)
                 })
             elif exp_type == "Triple Exponential":
-                popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
+                initial_guess = [max(y_vals)/3, 0.001, max(y_vals)/3, 0.0001, max(y_vals)/3, 0.00001, min(y_vals)]
+                popt, _ = curve_fit(triple_exp, x_vals, y_vals, p0=initial_guess, maxfev=10000)
                 y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
                 half_life1 = np.log(2) / popt[1]
@@ -130,7 +133,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
             print(f"{exp_type} fit failed for wavelength {target_wavelength} nm.")
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
-        ax.set_xlabel("Time (s)")  # Updated
+        ax.set_xlabel("Time (s)")
         ax.set_ylabel("Absorbance")
         ax.grid(True)
         ax.legend()
