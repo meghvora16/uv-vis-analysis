@@ -129,8 +129,18 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life2 (s)": format_to_exponential(half_life2),
                     "Half-life3 (s)": format_to_exponential(half_life3)
                 })
-        except RuntimeError:
-            print(f"{exp_type} fit failed for wavelength {target_wavelength} nm.")
+        except Exception as e:
+            print(f"{exp_type} fit failed for wavelength {target_wavelength} nm. Error: {e}")
+            # Attempt to plot the initial model with guess parameters and mark as failed
+            if exp_type == "Single Exponential":
+                y_fit = single_exp(x_dense, *initial_guess)
+                ax.plot(x_dense, y_fit, 'g--', label="Failed Single Exp Fit Attempt")
+            elif exp_type == "Double Exponential":
+                y_fit = double_exp(x_dense, *initial_guess)
+                ax.plot(x_dense, y_fit, 'r--', label="Failed Double Exp Fit Attempt")
+            elif exp_type == "Triple Exponential":
+                y_fit = triple_exp(x_dense, *initial_guess)
+                ax.plot(x_dense, y_fit, 'b--', label="Failed Triple Exp Fit Attempt")
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
         ax.set_xlabel("Time (s)")
