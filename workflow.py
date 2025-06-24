@@ -12,12 +12,15 @@ def r2_score(y_true, y_pred):
     return 1 - (ss_res / ss_tot)
 
 def single_exp(t, A, k, C):
+    t = np.array(t, dtype=float)
     return A * np.exp(-k * t) + C
 
 def double_exp(t, A1, k1, A2, k2, C):
+    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + C
 
 def triple_exp(t, A1, k1, A2, k2, A3, k3, C):
+    t = np.array(t, dtype=float)
     return A1 * np.exp(-k1 * t) + A2 * np.exp(-k2 * t) + A3 * np.exp(-k3 * t) + C
 
 def load_and_clean(filepath):
@@ -55,7 +58,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
-        # Convert index to actual time (360 seconds per spectrum)
+        # Convert index to actual time (assuming 360 seconds increment per spectrum)
         x_vals = np.arange(1, len(y_vals) + 1, dtype=float) * 360
         x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)
 
@@ -64,12 +67,10 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
 
         try:
             if exp_type == "Single Exponential":
-                initial_guess = [max(y_vals), 0.001, min(y_vals)]
-                bounds = ([0, 0, 0], [np.inf, np.inf, np.inf])
-                popt, _ = curve_fit(single_exp, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
+                popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
-                half_life = np.log(2) / popt[1]
+                half_life = np.log(2) / popt[1]  # Calculate half-life
                 ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2}}$={half_life:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
@@ -82,9 +83,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life (s)": format_to_exponential(half_life)
                 })
             elif exp_type == "Double Exponential":
-                initial_guess = [max(y_vals)/2, 0.001, max(y_vals)/2, 0.0001, min(y_vals)]
-                bounds = ([0, 0, 0, 0, 0], [np.inf, np.inf, np.inf, np.inf, np.inf])
-                popt, _ = curve_fit(double_exp, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
+                popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
                 y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
                 half_life1 = np.log(2) / popt[1]
@@ -104,9 +103,7 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life2 (s)": format_to_exponential(half_life2)
                 })
             elif exp_type == "Triple Exponential":
-                initial_guess = [max(y_vals)/3, 0.001, max(y_vals)/3, 0.0001, max(y_vals)/3, 0.00001, min(y_vals)]
-                bounds = ([0, 0, 0, 0, 0, 0, 0], [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf])
-                popt, _ = curve_fit(triple_exp, x_vals, y_vals, p0=initial_guess, bounds=bounds, maxfev=10000)
+                popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
                 y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
                 half_life1 = np.log(2) / popt[1]
@@ -129,11 +126,11 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "Half-life2 (s)": format_to_exponential(half_life2),
                     "Half-life3 (s)": format_to_exponential(half_life3)
                 })
-        except Exception as e:
-            print(f"{exp_type} fit failed for wavelength {target_wavelength} nm. Error: {e}")
+        except RuntimeError:
+            print(f"{exp_type} fit failed for wavelength {target_wavelength} nm.")
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
-        ax.set_xlabel("Time (s)")
+        ax.set_xlabel("Time (s)")  # Improved x-axis label
         ax.set_ylabel("Absorbance")
         ax.grid(True)
         ax.legend()
