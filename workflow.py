@@ -58,7 +58,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
     for target_wavelength in target_wavelengths:
         idx = (df.iloc[:, 0] - target_wavelength).abs().idxmin()
         y_vals = df.iloc[idx, 1:].to_numpy()
-        x_vals = np.arange(1, len(y_vals) + 1, dtype=float)
+        # Adjust x values to actual time in seconds
+        x_vals = np.arange(1, len(y_vals) + 1, dtype=float) * 360
         x_dense = np.linspace(x_vals.min(), x_vals.max(), 500)
 
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -69,7 +70,8 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                 popt, _ = curve_fit(single_exp, x_vals, y_vals, maxfev=10000)
                 y_fit = single_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, single_exp(x_vals, *popt))
-                ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}")
+                half_life = np.log(2) / popt[1]  # Calculate half-life
+                ax.plot(x_dense, y_fit, 'g--', label=f"Single Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2}}$={half_life:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -77,13 +79,17 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "A": format_to_exponential(popt[0]),
                     "k": format_to_exponential(popt[1]),
                     "C": format_to_exponential(popt[2]),
-                    "R²": format_to_exponential(r2)
+                    "R²": format_to_exponential(r2),
+                    "Half-life (s)": format_to_exponential(half_life)
                 })
             elif exp_type == "Double Exponential":
                 popt, _ = curve_fit(double_exp, x_vals, y_vals, maxfev=10000)
                 y_fit = double_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, double_exp(x_vals, *popt))
-                ax.plot(x_dense, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}")
+                # Calculate half-lives for both components
+                half_life1 = np.log(2) / popt[1]
+                half_life2 = np.log(2) / popt[3]
+                ax.plot(x_dense, y_fit, 'r--', label=f"Double Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2,1}}$={half_life1:.2f}s\n$t_{{1/2,2}}$={half_life2:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -93,13 +99,19 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "A2": format_to_exponential(popt[2]),
                     "k2": format_to_exponential(popt[3]),
                     "C": format_to_exponential(popt[4]),
-                    "R²": format_to_exponential(r2)
+                    "R²": format_to_exponential(r2),
+                    "Half-life1 (s)": format_to_exponential(half_life1),
+                    "Half-life2 (s)": format_to_exponential(half_life2)
                 })
             elif exp_type == "Triple Exponential":
                 popt, _ = curve_fit(triple_exp, x_vals, y_vals, maxfev=10000)
                 y_fit = triple_exp(x_dense, *popt)
                 r2 = r2_score(y_vals, triple_exp(x_vals, *popt))
-                ax.plot(x_dense, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}")
+                # Calculate half-lives for all components
+                half_life1 = np.log(2) / popt[1]
+                half_life2 = np.log(2) / popt[3]
+                half_life3 = np.log(2) / popt[5]
+                ax.plot(x_dense, y_fit, 'b--', label=f"Triple Exp Fit\n$R^2$={r2:.3f}\n$t_{{1/2,1}}$={half_life1:.2f}s\n$t_{{1/2,2}}$={half_life2:.2f}s\n$t_{{1/2,3}}$={half_life3:.2f}s")
                 fit_params_list.append({
                     "Spectrum": base_name,
                     "Wavelength (nm)": target_wavelength,
@@ -111,13 +123,16 @@ def fit_and_plot(filepath, target_wavelengths, exp_type):
                     "A3": format_to_exponential(popt[4]),
                     "k3": format_to_exponential(popt[5]),
                     "C": format_to_exponential(popt[6]),
-                    "R²": format_to_exponential(r2)
+                    "R²": format_to_exponential(r2),
+                    "Half-life1 (s)": format_to_exponential(half_life1),
+                    "Half-life2 (s)": format_to_exponential(half_life2),
+                    "Half-life3 (s)": format_to_exponential(half_life3)
                 })
         except RuntimeError:
             print(f"{exp_type} fit failed for wavelength {target_wavelength} nm.")
 
         ax.set_title(f"{base_name} — Fits at {target_wavelength} nm")
-        ax.set_xlabel("Spectrum Index")
+        ax.set_xlabel("Time (s)")
         ax.set_ylabel("Absorbance")
         ax.grid(True)
         ax.legend()
