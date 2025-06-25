@@ -7,7 +7,6 @@ st.set_page_config(page_title="UV-Vis Analyzer", layout="wide")
 logo_image_path = "Schaeffler_Logo.png"
 st.image(logo_image_path, width=200)
 st.title("UV-Vis Spectrum Analyzer")
-st.subheader("Dr. Joanna Procelewska, ST/HZA-CMB")
 
 exp_type = st.selectbox(
     "Select Exponential Fitting Type",
